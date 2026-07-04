@@ -1,0 +1,38 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Check if the user is signed in
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Check if the user is the Super Admin
+    function isSuperAdmin() {
+      return isAuthenticated() && request.auth.token.email == 'aqeelaeo@gmail.com';
+    }
+
+    // Check if the user is authorized (Super Admin or listed in authorized_emails)
+    function isAuthorized() {
+      return isSuperAdmin() || (
+        isAuthenticated() && 
+        exists(/databases/$(database)/documents/settings/authorized_emails) &&
+        request.auth.token.email in get(/databases/$(database)/documents/settings/authorized_emails).data.emails
+      );
+    }
+
+    // The authorized_emails document: 
+    // - Any authenticated user needs to read this to check their access level
+    // - Only the Super Admin can modify it
+    match /settings/authorized_emails {
+      allow read: if isAuthenticated();
+      allow write: if isSuperAdmin();
+    }
+
+    // All other collections and documents:
+    // - Only authorized users can read and write to the rest of the database
+    match /{document=**} {
+      allow read, write: if isAuthorized();
+    }
+  }
+}
