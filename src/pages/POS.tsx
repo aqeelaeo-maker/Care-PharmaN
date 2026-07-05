@@ -70,7 +70,7 @@ export default function POS() {
     setCart(cart.filter(item => item.product.id !== id));
   };
 
-  const handlePrintCurrentInvoice = () => {
+  const handlePrintCurrentInvoice = (type: 'standard' | 'thermal') => {
     if (cart.length === 0) return;
     const tempInvoice = {
       items: cart.map(item => ({
@@ -83,7 +83,7 @@ export default function POS() {
       total,
       timestamp: new Date()
     };
-    printInvoiceHtml(tempInvoice);
+    printInvoiceHtml(tempInvoice, type);
   };
 
   const processPayment = async (method: string) => {
@@ -253,11 +253,16 @@ export default function POS() {
               <span className="text-2xl font-black text-emerald-600">${total.toFixed(2)}</span>
             </div>
             
-            <div className="flex gap-3">
-              <button onClick={handlePrintCurrentInvoice} disabled={cart.length === 0} className="w-1/3 flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 py-3 rounded-xl font-bold shadow-sm hover:bg-slate-50 transition-colors disabled:opacity-50">
-                <Printer className="w-5 h-5" /> Print
-              </button>
-              <button disabled={isProcessing || cart.length === 0} onClick={() => processPayment('Standard')} className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 text-white py-3 rounded-xl font-bold shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-colors disabled:opacity-50">
+            <div className="flex flex-col gap-3">
+              <div className="flex gap-3">
+                <button onClick={() => handlePrintCurrentInvoice('standard')} disabled={cart.length === 0} className="flex-1 flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 py-3 rounded-xl font-bold shadow-sm hover:bg-slate-50 transition-colors disabled:opacity-50 text-sm">
+                  <Printer className="w-4 h-4" /> Print A4
+                </button>
+                <button onClick={() => handlePrintCurrentInvoice('thermal')} disabled={cart.length === 0} className="flex-1 flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 py-3 rounded-xl font-bold shadow-sm hover:bg-slate-50 transition-colors disabled:opacity-50 text-sm">
+                  <Printer className="w-4 h-4" /> Print 80mm
+                </button>
+              </div>
+              <button disabled={isProcessing || cart.length === 0} onClick={() => processPayment('Standard')} className="w-full flex items-center justify-center gap-2 bg-emerald-600 text-white py-3 rounded-xl font-bold shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-colors disabled:opacity-50">
                  {isProcessing ? 'Saving...' : 'Save Invoice'}
               </button>
             </div>

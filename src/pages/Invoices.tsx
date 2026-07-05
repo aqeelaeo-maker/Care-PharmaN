@@ -136,11 +136,18 @@ export default function Invoices() {
                     <td className="py-4 px-6 text-right">
                       <div className="flex justify-end gap-2">
                         <button 
-                          onClick={() => printInvoiceHtml(inv)}
-                          className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
-                          title="Print"
+                          onClick={() => printInvoiceHtml(inv, 'standard')}
+                          className="flex items-center gap-1 p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors text-xs font-bold"
+                          title="Print A4"
                         >
-                          <Printer className="w-5 h-5" />
+                          <Printer className="w-4 h-4" /> A4
+                        </button>
+                        <button 
+                          onClick={() => printInvoiceHtml(inv, 'thermal')}
+                          className="flex items-center gap-1 p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-colors text-xs font-bold"
+                          title="Print 80mm"
+                        >
+                          <Printer className="w-4 h-4" /> 80mm
                         </button>
                         <button 
                           onClick={() => openEditModal(inv)}
