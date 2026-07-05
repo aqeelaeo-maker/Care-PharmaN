@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Edit, Trash, X, Calendar, AlertCircle } from 'lucide-react';
+import { Search, Edit, Trash, X, Calendar, AlertCircle, Plus } from 'lucide-react';
 import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
@@ -7,10 +7,12 @@ export default function Stock() {
   const [searchTerm, setSearchTerm] = useState('');
   const [products, setProducts] = useState<any[]>([]);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [selectedProductId, setSelectedProductId] = useState<string>('');
   
   const [updateData, setUpdateData] = useState({
+    batch: '',
     stock: 0,
+    price: 0,
     expiryDate: ''
   });
 
@@ -27,30 +29,41 @@ export default function Stock() {
 
   const handleUpdateStock = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedProduct) return;
+    if (!selectedProductId) return;
     
     try {
       const stockNum = Number(updateData.stock);
+      const priceNum = Number(updateData.price);
       const status = stockNum < 10 ? 'Critical' : stockNum < 30 ? 'Low Stock' : 'In Stock';
       
-      await updateDoc(doc(db, 'products', selectedProduct.id), {
+      await updateDoc(doc(db, 'products', selectedProductId), {
+        batch: updateData.batch,
         stock: stockNum,
+        price: priceNum,
         expiryDate: updateData.expiryDate,
         status
       });
       setIsUpdateModalOpen(false);
-      setSelectedProduct(null);
+      setSelectedProductId('');
+      setUpdateData({ batch: '', stock: 0, price: 0, expiryDate: '' });
     } catch (err) {
       console.error("Error updating stock", err);
     }
   };
 
-  const openUpdateModal = (product: any) => {
-    setSelectedProduct(product);
-    setUpdateData({
-      stock: product.stock || 0,
-      expiryDate: product.expiryDate || ''
-    });
+  const openUpdateModal = (product?: any) => {
+    if (product) {
+      setSelectedProductId(product.id);
+      setUpdateData({
+        batch: product.batch || '',
+        stock: product.stock || 0,
+        price: product.price || 0,
+        expiryDate: product.expiryDate || ''
+      });
+    } else {
+      setSelectedProductId('');
+      setUpdateData({ batch: '', stock: 0, price: 0, expiryDate: '' });
+    }
     setIsUpdateModalOpen(true);
   };
 
@@ -64,7 +77,15 @@ export default function Stock() {
       <div className="flex flex-col md:flex-row md:items-center justify-between shrink-0">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Stock Management</h1>
-          <p className="text-sm text-slate-500">Monitor and update inventory levels and expiry dates.</p>
+          <p className="text-sm text-slate-500">Monitor and update inventory levels, batches, and expiry dates.</p>
+        </div>
+        <div className="mt-4 md:mt-0 flex gap-4">
+          <button 
+            onClick={() => openUpdateModal()}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-semibold shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-colors"
+          >
+            <Plus className="w-4 h-4" /> Update Stock
+          </button>
         </div>
       </div>
 
@@ -90,6 +111,7 @@ export default function Stock() {
               <tr className="text-slate-400 text-[10px] uppercase font-bold tracking-widest border-b border-slate-50">
                 <th className="py-4 px-6">Product & Batch</th>
                 <th className="py-4 px-6 text-center">Current Stock</th>
+                <th className="py-4 px-6 text-right">Price</th>
                 <th className="py-4 px-6">Expiry Date</th>
                 <th className="py-4 px-6">Status</th>
                 <th className="py-4 px-6 text-right">Actions</th>
@@ -107,8 +129,11 @@ export default function Stock() {
                     </td>
                     <td className="py-4 px-6 text-center">
                       <span className={`text-sm font-bold ${item.stock < 10 ? 'text-rose-500' : 'text-slate-800'}`}>
-                        {item.stock}
+                        {item.stock || 0}
                       </span>
+                    </td>
+                    <td className="py-4 px-6 text-right font-medium text-slate-800">
+                      ${Number(item.price || 0).toFixed(2)}
                     </td>
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-2">
@@ -121,11 +146,11 @@ export default function Stock() {
                     </td>
                     <td className="py-4 px-6">
                       <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
-                        item.status === 'Critical' ? 'bg-rose-50 text-rose-500' : 
+                        item.status === 'Critical' || item.stock === 0 ? 'bg-rose-50 text-rose-500' : 
                         item.status === 'Low Stock' ? 'bg-amber-50 text-amber-500' : 
                         'bg-emerald-50 text-emerald-500'
                       }`}>
-                        {item.status}
+                        {item.status || 'Out of Stock'}
                       </span>
                     </td>
                     <td className="py-4 px-6 text-right">
@@ -141,7 +166,7 @@ export default function Stock() {
               })}
               {filteredProducts.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-10 text-center text-slate-400 font-medium text-sm">
+                  <td colSpan={6} className="py-10 text-center text-slate-400 font-medium text-sm">
                     No products found.
                   </td>
                 </tr>
@@ -152,9 +177,9 @@ export default function Stock() {
       </div>
 
       {/* Update Stock Modal */}
-      {isUpdateModalOpen && selectedProduct && (
+      {isUpdateModalOpen && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-[2.5rem] w-full max-w-sm shadow-2xl overflow-hidden flex flex-col">
+          <div className="bg-white rounded-[2.5rem] w-full max-w-md shadow-2xl overflow-hidden flex flex-col">
             <div className="p-6 border-b border-slate-100 flex items-center justify-between shrink-0">
               <h2 className="text-xl font-bold text-slate-800">Update Stock</h2>
               <button onClick={() => setIsUpdateModalOpen(false)} className="p-2 text-slate-400 hover:bg-slate-100 rounded-full transition-colors">
@@ -163,16 +188,52 @@ export default function Stock() {
             </div>
             
             <div className="p-6 overflow-y-auto flex-1">
-              <div className="mb-4">
-                <div className="text-sm font-semibold text-slate-800">{selectedProduct.name}</div>
-                <div className="text-xs text-slate-500">Batch: {selectedProduct.batch || '-'}</div>
-              </div>
-
               <form id="update-stock-form" onSubmit={handleUpdateStock} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1">New Stock Level</label>
-                  <input type="number" required min="0" value={updateData.stock} onChange={e => setUpdateData({...updateData, stock: Number(e.target.value)})} className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" />
+                  <label className="block text-sm font-bold text-slate-700 mb-1">Select Product</label>
+                  <select 
+                    required 
+                    value={selectedProductId} 
+                    onChange={e => {
+                      const pid = e.target.value;
+                      setSelectedProductId(pid);
+                      const prod = products.find(p => p.id === pid);
+                      if (prod) {
+                        setUpdateData({
+                          batch: prod.batch || '',
+                          stock: prod.stock || 0,
+                          price: prod.price || 0,
+                          expiryDate: prod.expiryDate || ''
+                        });
+                      } else {
+                        setUpdateData({ batch: '', stock: 0, price: 0, expiryDate: '' });
+                      }
+                    }} 
+                    className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  >
+                    <option value="" disabled>Select a product...</option>
+                    {products.map(p => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
                 </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">Batch Number</label>
+                  <input type="text" required value={updateData.batch} onChange={e => setUpdateData({...updateData, batch: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" placeholder="e.g. BTH-1029" />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1">Stock Level</label>
+                    <input type="number" required min="0" value={updateData.stock} onChange={e => setUpdateData({...updateData, stock: Number(e.target.value)})} className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1">Price ($)</label>
+                    <input type="number" required min="0" step="0.01" value={updateData.price} onChange={e => setUpdateData({...updateData, price: Number(e.target.value)})} className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" />
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">Expiry Date</label>
                   <input type="date" required value={updateData.expiryDate} onChange={e => setUpdateData({...updateData, expiryDate: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" />
@@ -184,7 +245,7 @@ export default function Stock() {
               <button onClick={() => setIsUpdateModalOpen(false)} className="px-6 py-3 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-200 transition-colors">
                 Cancel
               </button>
-              <button type="submit" form="update-stock-form" className="px-6 py-3 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/20 transition-all">
+              <button type="submit" form="update-stock-form" disabled={!selectedProductId} className="px-6 py-3 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/20 transition-all disabled:opacity-50">
                 Update
               </button>
             </div>
@@ -194,3 +255,4 @@ export default function Stock() {
     </div>
   );
 }
+
