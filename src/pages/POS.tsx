@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Barcode, Trash2, Plus, Minus, CreditCard, Banknote, User } from 'lucide-react';
+import { Search, Barcode, Trash2, Plus, Minus, CreditCard, Banknote, User, ArrowLeft } from 'lucide-react';
 import { collection, onSnapshot, addDoc, doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { useNavigate } from 'react-router-dom';
 
 export default function POS() {
+  const navigate = useNavigate();
   const [cart, setCart] = useState<{product: any, qty: number}[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [products, setProducts] = useState<any[]>([]);
@@ -75,7 +77,7 @@ export default function POS() {
       }
 
       setCart([]);
-      alert('Payment processed successfully!');
+      navigate('/invoices');
     } catch (err) {
       console.error("Error processing payment", err);
       alert('Error processing payment');
@@ -97,8 +99,11 @@ export default function POS() {
     <div className="h-full flex flex-col lg:flex-row bg-slate-50">
       {/* Products Section */}
       <div className="flex-1 flex flex-col h-full border-r border-slate-200">
-        <div className="p-4 bg-white border-b border-slate-200">
-          <div className="relative">
+        <div className="p-4 bg-white border-b border-slate-200 flex items-center gap-4">
+          <button onClick={() => navigate('/invoices')} className="p-2 text-slate-400 hover:text-slate-800 transition-colors">
+            <ArrowLeft className="w-6 h-6" />
+          </button>
+          <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
             <input 
               type="text" 

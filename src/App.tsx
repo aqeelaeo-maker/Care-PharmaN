@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import POS from './pages/POS';
+import Invoices from './pages/Invoices';
 import Inventory from './pages/Inventory';
 import Stock from './pages/Stock';
 import Settings from './pages/Settings';
@@ -71,6 +72,7 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
             <Route index element={<Dashboard />} />
+            <Route path="invoices" element={<Invoices />} />
             <Route path="pos" element={<POS />} />
             <Route path="products" element={<Inventory />} />
             <Route path="stock" element={<Stock />} />

@@ -20,7 +20,7 @@ import { db } from '../lib/firebase';
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
-  { icon: ShoppingCart, label: 'POS Terminal', path: '/pos' },
+  { icon: Receipt, label: 'Invoices', path: '/invoices' },
   { icon: Package, label: 'Products', path: '/products' },
   { icon: Archive, label: 'Stock', path: '/stock' },
   { icon: Users, label: 'Customers', path: '/customers' },

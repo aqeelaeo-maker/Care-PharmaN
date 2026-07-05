@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   TrendingUp, 
   Users, 
@@ -22,6 +23,7 @@ import { collection, onSnapshot, query, orderBy, limit } from 'firebase/firestor
 import { db } from '../lib/firebase';
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [dailyRevenue, setDailyRevenue] = useState(0);
   const [totalCustomers, setTotalCustomers] = useState(0);
   const [productsInStock, setProductsInStock] = useState(0);
@@ -122,7 +124,7 @@ export default function Dashboard() {
           <button className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-50 transition-colors shadow-sm">
             Download Report
           </button>
-          <button className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-semibold shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-colors">
+          <button onClick={() => navigate('/pos')} className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-semibold shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-colors">
             New Sale
           </button>
         </div>
