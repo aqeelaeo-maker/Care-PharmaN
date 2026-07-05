@@ -11,15 +11,11 @@ import POS from './pages/POS';
 import Inventory from './pages/Inventory';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
+import Customers from './pages/Customers';
+import Vendors from './pages/Vendors';
+import Reports from './pages/Reports';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Pill } from 'lucide-react';
-
-// Placeholder components for other routes
-const Placeholder = ({ title }: { title: string }) => (
-  <div className="flex items-center justify-center h-full bg-slate-50">
-    <h1 className="text-2xl font-bold text-slate-400">{title} Module (Coming Soon)</h1>
-  </div>
-);
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isAuthorized, loading } = useAuth();
@@ -76,9 +72,9 @@ export default function App() {
             <Route index element={<Dashboard />} />
             <Route path="pos" element={<POS />} />
             <Route path="products" element={<Inventory />} />
-            <Route path="customers" element={<Placeholder title="Customers" />} />
-            <Route path="vendors" element={<Placeholder title="Vendors" />} />
-            <Route path="reports" element={<Placeholder title="Reports" />} />
+            <Route path="customers" element={<Customers />} />
+            <Route path="vendors" element={<Vendors />} />
+            <Route path="reports" element={<Reports />} />
             <Route path="settings" element={<Settings />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>

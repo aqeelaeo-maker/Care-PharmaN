@@ -1,29 +1,81 @@
-import React, { useState } from 'react';
-import { Search, Plus, Filter, Download, MoreVertical, Edit, Trash } from 'lucide-react';
-
-const DUMMY_INVENTORY = [
-  { id: '1', name: 'Paracetamol 500mg', category: 'Painkillers', stock: 120, unit: 'Strip', price: 5.00, status: 'In Stock' },
-  { id: '2', name: 'Amoxicillin 250mg', category: 'Antibiotics', stock: 45, unit: 'Box', price: 12.50, status: 'Low Stock' },
-  { id: '3', name: 'Cetirizine 10mg', category: 'Antihistamines', stock: 200, unit: 'Strip', price: 8.00, status: 'In Stock' },
-  { id: '4', name: 'Omeprazole 20mg', category: 'Gastrointestinal', stock: 80, unit: 'Bottle', price: 15.00, status: 'In Stock' },
-  { id: '5', name: 'Vitamin C 1000mg', category: 'Vitamins', stock: 12, unit: 'Bottle', price: 25.00, status: 'Critical' },
-];
+import React, { useState, useEffect } from 'react';
+import { Search, Plus, Filter, Download, MoreVertical, Edit, Trash, X } from 'lucide-react';
+import { collection, onSnapshot, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
 export default function Inventory() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [products, setProducts] = useState<any[]>([]);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  
+  const [newProduct, setNewProduct] = useState({
+    name: '',
+    generic: '',
+    category: '',
+    stock: 0,
+    unit: 'Strip',
+    price: 0,
+    status: 'In Stock'
+  });
+
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, 'products'), (snapshot) => {
+      const items: any[] = [];
+      snapshot.forEach((doc) => {
+        items.push({ id: doc.id, ...doc.data() });
+      });
+      setProducts(items);
+    });
+    return () => unsub();
+  }, []);
+
+  const handleAddProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const status = newProduct.stock < 10 ? 'Critical' : newProduct.stock < 30 ? 'Low Stock' : 'In Stock';
+      await addDoc(collection(db, 'products'), {
+        ...newProduct,
+        status,
+        stock: Number(newProduct.stock),
+        price: Number(newProduct.price)
+      });
+      setIsAddModalOpen(false);
+      setNewProduct({ name: '', generic: '', category: '', stock: 0, unit: 'Strip', price: 0, status: 'In Stock' });
+    } catch (err) {
+      console.error("Error adding product", err);
+    }
+  };
+
+  const handleDeleteProduct = async (id: string) => {
+    if (confirm("Are you sure you want to delete this product?")) {
+      try {
+        await deleteDoc(doc(db, 'products', id));
+      } catch (err) {
+        console.error("Error deleting product", err);
+      }
+    }
+  };
+
+  const filteredProducts = products.filter(p => 
+    p.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    p.category?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div className="p-8 max-w-none h-full flex flex-col gap-6 bg-slate-50">
+    <div className="p-8 max-w-none h-full flex flex-col gap-6 bg-slate-50 relative">
       <div className="flex flex-col md:flex-row md:items-center justify-between shrink-0">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Inventory Management</h1>
+          <h1 className="text-2xl font-bold text-slate-800">Products Management</h1>
           <p className="text-sm text-slate-500">Manage your pharmacy products and stock levels.</p>
         </div>
         <div className="mt-4 md:mt-0 flex gap-4">
           <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-50 transition-colors shadow-sm">
             <Download className="w-4 h-4" /> Export
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-semibold shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-colors">
+          <button 
+            onClick={() => setIsAddModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-semibold shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-colors"
+          >
             <Plus className="w-4 h-4" /> Add Product
           </button>
         </div>
@@ -36,7 +88,7 @@ export default function Inventory() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input 
               type="text" 
-              placeholder="Search inventory..."
+              placeholder="Search products..."
               className="w-full pl-10 pr-4 py-2 text-sm rounded-full bg-slate-100 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -63,18 +115,18 @@ export default function Inventory() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50 bg-white">
-              {DUMMY_INVENTORY.map((item) => (
+              {filteredProducts.map((item) => (
                 <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="py-4 px-6">
                     <div className="text-sm font-semibold text-slate-800">{item.name}</div>
-                    <div className="text-xs text-slate-400 font-mono">ID: PRD-{item.id.padStart(4, '0')}</div>
+                    <div className="text-xs text-slate-400 font-mono">ID: {item.id.slice(0, 8).toUpperCase()}</div>
                   </td>
                   <td className="py-4 px-6 text-sm text-slate-500">{item.category}</td>
                   <td className="py-4 px-6 text-sm text-slate-800 text-right">
                     <span className="font-bold">{item.stock}</span> <span className="text-slate-400 text-xs ml-1">{item.unit}</span>
                   </td>
                   <td className="py-4 px-6 text-sm font-bold text-slate-800 text-right">
-                    ${item.price.toFixed(2)}
+                    ${Number(item.price).toFixed(2)}
                   </td>
                   <td className="py-4 px-6">
                     <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
@@ -90,7 +142,7 @@ export default function Inventory() {
                       <button className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors">
                         <Edit className="w-4 h-4" />
                       </button>
-                      <button className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors">
+                      <button onClick={() => handleDeleteProduct(item.id)} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors">
                         <Trash className="w-4 h-4" />
                       </button>
                       <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">
@@ -100,20 +152,88 @@ export default function Inventory() {
                   </td>
                 </tr>
               ))}
+              {filteredProducts.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="py-10 text-center text-slate-400 font-medium text-sm">
+                    No products found.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
         
         {/* Pagination */}
         <div className="p-6 border-t border-slate-50 bg-white flex items-center justify-between text-sm text-slate-500">
-          <div>Showing <span className="font-bold text-slate-800">1</span> to <span className="font-bold text-slate-800">5</span> of <span className="font-bold text-slate-800">5</span> entries</div>
+          <div>Showing <span className="font-bold text-slate-800">{filteredProducts.length}</span> products</div>
           <div className="flex gap-2">
-            <button className="px-4 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 disabled:opacity-50 font-bold text-slate-700 transition-colors">Previous</button>
+            <button className="px-4 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 disabled:opacity-50 font-bold text-slate-700 transition-colors" disabled>Previous</button>
             <button className="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl font-bold">1</button>
-            <button className="px-4 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 font-bold text-slate-700 transition-colors">Next</button>
+            <button className="px-4 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 font-bold text-slate-700 transition-colors" disabled>Next</button>
           </div>
         </div>
       </div>
+
+      {/* Add Product Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2.5rem] w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between shrink-0">
+              <h2 className="text-xl font-bold text-slate-800">Add New Product</h2>
+              <button onClick={() => setIsAddModalOpen(false)} className="p-2 text-slate-400 hover:bg-slate-100 rounded-full transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto flex-1">
+              <form id="add-product-form" onSubmit={handleAddProduct} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">Product Name</label>
+                  <input type="text" required value={newProduct.name} onChange={e => setNewProduct({...newProduct, name: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" placeholder="e.g. Paracetamol 500mg" />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">Generic Name</label>
+                  <input type="text" value={newProduct.generic} onChange={e => setNewProduct({...newProduct, generic: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" placeholder="e.g. Acetaminophen" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1">Category</label>
+                    <input type="text" required value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" placeholder="e.g. Painkillers" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1">Unit</label>
+                    <select value={newProduct.unit} onChange={e => setNewProduct({...newProduct, unit: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+                      <option value="Strip">Strip</option>
+                      <option value="Box">Box</option>
+                      <option value="Bottle">Bottle</option>
+                      <option value="Piece">Piece</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1">Initial Stock</label>
+                    <input type="number" required min="0" value={newProduct.stock} onChange={e => setNewProduct({...newProduct, stock: Number(e.target.value)})} className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1">Price ($)</label>
+                    <input type="number" required min="0" step="0.01" value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: Number(e.target.value)})} className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" />
+                  </div>
+                </div>
+              </form>
+            </div>
+            
+            <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 shrink-0">
+              <button onClick={() => setIsAddModalOpen(false)} className="px-6 py-3 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-200 transition-colors">
+                Cancel
+              </button>
+              <button type="submit" form="add-product-form" className="px-6 py-3 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/20 transition-all">
+                Save Product
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
