@@ -1,24 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Barcode, Trash2, Plus, Minus, CreditCard, Banknote, User } from 'lucide-react';
-
-const DUMMY_PRODUCTS = [
-  { id: '1', name: 'Paracetamol 500mg', price: 5.00, stock: 120, generic: 'Acetaminophen' },
-  { id: '2', name: 'Amoxicillin 250mg', price: 12.50, stock: 45, generic: 'Amoxicillin' },
-  { id: '3', name: 'Cetirizine 10mg', price: 8.00, stock: 200, generic: 'Cetirizine' },
-  { id: '4', name: 'Omeprazole 20mg', price: 15.00, stock: 80, generic: 'Omeprazole' },
-  { id: '5', name: 'Vitamin C 1000mg', price: 25.00, stock: 150, generic: 'Ascorbic Acid' },
-];
+import { collection, onSnapshot, addDoc, doc, updateDoc, increment } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
 export default function POS() {
   const [cart, setCart] = useState<{product: any, qty: number}[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [products, setProducts] = useState<any[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, 'products'), (snapshot) => {
+      const items: any[] = [];
+      snapshot.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
+      setProducts(items);
+    });
+    return () => unsub();
+  }, []);
 
   const addToCart = (product: any) => {
     const existing = cart.find(item => item.product.id === product.id);
     if (existing) {
-      setCart(cart.map(item => item.product.id === product.id ? { ...item, qty: item.qty + 1 } : item));
+      if (existing.qty < product.stock) {
+        setCart(cart.map(item => item.product.id === product.id ? { ...item, qty: item.qty + 1 } : item));
+      }
     } else {
-      setCart([...cart, { product, qty: 1 }]);
+      if (product.stock > 0) {
+        setCart([...cart, { product, qty: 1 }]);
+      }
     }
   };
 
@@ -26,7 +35,9 @@ export default function POS() {
     setCart(cart.map(item => {
       if (item.product.id === id) {
         const newQty = item.qty + delta;
-        return newQty > 0 ? { ...item, qty: newQty } : item;
+        if (newQty > 0 && newQty <= item.product.stock) {
+          return { ...item, qty: newQty };
+        }
       }
       return item;
     }));
@@ -36,13 +47,50 @@ export default function POS() {
     setCart(cart.filter(item => item.product.id !== id));
   };
 
+  const processPayment = async (method: string) => {
+    if (cart.length === 0) return;
+    setIsProcessing(true);
+    try {
+      // 1. Create sale record
+      await addDoc(collection(db, 'sales'), {
+        items: cart.map(item => ({
+          productId: item.product.id,
+          name: item.product.name,
+          qty: item.qty,
+          price: item.product.price
+        })),
+        subtotal,
+        tax,
+        total,
+        paymentMethod: method,
+        timestamp: new Date()
+      });
+
+      // 2. Update stock
+      for (const item of cart) {
+        const productRef = doc(db, 'products', item.product.id);
+        await updateDoc(productRef, {
+          stock: increment(-item.qty)
+        });
+      }
+
+      setCart([]);
+      alert('Payment processed successfully!');
+    } catch (err) {
+      console.error("Error processing payment", err);
+      alert('Error processing payment');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const subtotal = cart.reduce((sum, item) => sum + (item.product.price * item.qty), 0);
   const tax = subtotal * 0.05; // 5% tax
   const total = subtotal + tax;
 
-  const filteredProducts = DUMMY_PRODUCTS.filter(p => 
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    p.generic.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredProducts = products.filter(p => 
+    p.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    p.generic?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -149,11 +197,11 @@ export default function POS() {
           </div>
           
           <div className="grid grid-cols-2 gap-3">
-            <button className="flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 py-3 rounded-xl font-bold shadow-sm hover:bg-slate-50 transition-colors">
-              <Banknote className="w-5 h-5" /> Cash
+            <button disabled={isProcessing || cart.length === 0} onClick={() => processPayment('Cash')} className="flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 py-3 rounded-xl font-bold shadow-sm hover:bg-slate-50 transition-colors disabled:opacity-50">
+              <Banknote className="w-5 h-5" /> {isProcessing ? '...' : 'Cash'}
             </button>
-            <button className="flex items-center justify-center gap-2 bg-emerald-600 text-white py-3 rounded-xl font-bold shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-colors">
-              <CreditCard className="w-5 h-5" /> Card
+            <button disabled={isProcessing || cart.length === 0} onClick={() => processPayment('Card')} className="flex items-center justify-center gap-2 bg-emerald-600 text-white py-3 rounded-xl font-bold shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-colors disabled:opacity-50">
+              <CreditCard className="w-5 h-5" /> {isProcessing ? '...' : 'Card'}
             </button>
           </div>
         </div>
