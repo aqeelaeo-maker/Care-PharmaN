@@ -11,12 +11,55 @@ export default function Settings() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [savingConfig, setSavingConfig] = useState(false);
+  const [storeConfig, setStoreConfig] = useState({
+    logoUrl: '',
+    contactNumber1: '',
+    contactNumber2: '',
+    address: '',
+    email: '',
+    website: ''
+  });
 
   const isSuperAdmin = user?.email === 'aqeelaeo@gmail.com';
 
   useEffect(() => {
     fetchAuthorizedEmails();
+    fetchStoreConfig();
   }, []);
+
+  const fetchStoreConfig = async () => {
+    try {
+      const docRef = doc(db, 'settings', 'store_config');
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        setStoreConfig(docSnap.data() as any);
+      }
+    } catch (err) {
+      console.error("Error fetching store config:", err);
+    }
+  };
+
+  const handleStoreConfigChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setStoreConfig(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveStoreConfig = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setSavingConfig(true);
+      setError('');
+      await setDoc(doc(db, 'settings', 'store_config'), storeConfig, { merge: true });
+      setSuccess('Store configuration saved successfully.');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      console.error("Error saving store config:", err);
+      setError("Failed to save store configuration.");
+    } finally {
+      setSavingConfig(false);
+    }
+  };
 
   const fetchAuthorizedEmails = async () => {
     try {
@@ -204,13 +247,95 @@ export default function Settings() {
         </div>
       </div>
       
-      {/* General Settings placeholder */}
-      <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-6 sm:p-8 opacity-60">
+      <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-6 sm:p-8">
         <h2 className="text-xl font-bold text-slate-800 mb-2">Store Configuration</h2>
-        <p className="text-sm text-slate-500 mb-6">General settings and preferences.</p>
-        <div className="h-32 flex items-center justify-center border-2 border-dashed border-slate-200 rounded-2xl">
-          <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">More settings coming soon</p>
-        </div>
+        <p className="text-sm text-slate-500 mb-6">General settings and preferences for your store.</p>
+        
+        <form onSubmit={handleSaveStoreConfig} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="md:col-span-2">
+              <label className="block text-sm font-bold text-slate-700 mb-2">Store Logo URL</label>
+              <input 
+                type="url" 
+                name="logoUrl"
+                value={storeConfig.logoUrl}
+                onChange={handleStoreConfigChange}
+                placeholder="https://example.com/logo.png"
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-2">Contact Number 1</label>
+              <input 
+                type="text" 
+                name="contactNumber1"
+                value={storeConfig.contactNumber1}
+                onChange={handleStoreConfigChange}
+                placeholder="+1 (555) 123-4567"
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-2">Contact Number 2</label>
+              <input 
+                type="text" 
+                name="contactNumber2"
+                value={storeConfig.contactNumber2}
+                onChange={handleStoreConfigChange}
+                placeholder="+1 (555) 987-6543"
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-bold text-slate-700 mb-2">Address</label>
+              <textarea 
+                name="address"
+                value={storeConfig.address}
+                onChange={handleStoreConfigChange}
+                placeholder="123 Main St, City, Country"
+                rows={3}
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all resize-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-2">Store Email</label>
+              <input 
+                type="email" 
+                name="email"
+                value={storeConfig.email}
+                onChange={handleStoreConfigChange}
+                placeholder="contact@store.com"
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-2">Website</label>
+              <input 
+                type="url" 
+                name="website"
+                value={storeConfig.website}
+                onChange={handleStoreConfigChange}
+                placeholder="https://store.com"
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+              />
+            </div>
+          </div>
+          
+          <div className="flex justify-end pt-4">
+            <button 
+              type="submit"
+              disabled={savingConfig}
+              className="px-8 py-3 bg-slate-800 text-white rounded-xl text-sm font-bold hover:bg-slate-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg shadow-slate-800/20"
+            >
+              {savingConfig ? 'Saving...' : 'Save Configuration'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
