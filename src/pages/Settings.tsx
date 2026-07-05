@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Plus, Trash2, Mail, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Shield, Plus, Trash2, Mail, AlertCircle, CheckCircle2, Upload } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { db } from '../lib/firebase';
+import { db, storage } from '../lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 export default function Settings() {
   const { user, role } = useAuth();
@@ -12,6 +13,7 @@ export default function Settings() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [savingConfig, setSavingConfig] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [storeConfig, setStoreConfig] = useState({
     logoUrl: '',
     contactNumber1: '',
@@ -43,6 +45,27 @@ export default function Settings() {
   const handleStoreConfigChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setStoreConfig(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploadingLogo(true);
+      setError('');
+      const storageRef = ref(storage, `store_assets/logo_${Date.now()}_${file.name}`);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      setStoreConfig(prev => ({ ...prev, logoUrl: url }));
+      setSuccess('Logo uploaded successfully. Remember to save configuration.');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      console.error("Error uploading logo:", err);
+      setError("Failed to upload logo. Please check your storage permissions or use a URL instead.");
+    } finally {
+      setUploadingLogo(false);
+    }
   };
 
   const handleSaveStoreConfig = async (e: React.FormEvent) => {
@@ -254,15 +277,34 @@ export default function Settings() {
         <form onSubmit={handleSaveStoreConfig} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
-              <label className="block text-sm font-bold text-slate-700 mb-2">Store Logo URL</label>
-              <input 
-                type="url" 
-                name="logoUrl"
-                value={storeConfig.logoUrl}
-                onChange={handleStoreConfigChange}
-                placeholder="https://example.com/logo.png"
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
-              />
+              <label className="block text-sm font-bold text-slate-700 mb-2">Store Logo</label>
+              <div className="flex gap-4 items-start">
+                {storeConfig.logoUrl && (
+                  <img src={storeConfig.logoUrl} alt="Logo Preview" className="w-16 h-16 rounded-xl object-cover border border-slate-200 shrink-0 bg-white" />
+                )}
+                <div className="flex-1 space-y-3">
+                  <div className="flex gap-3">
+                    <input 
+                      type="url" 
+                      name="logoUrl"
+                      value={storeConfig.logoUrl}
+                      onChange={handleStoreConfigChange}
+                      placeholder="https://example.com/logo.png"
+                      className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                    />
+                    <label className="px-6 py-3 bg-slate-100 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-200 transition-colors cursor-pointer flex items-center gap-2 shrink-0 border border-slate-200">
+                      {uploadingLogo ? (
+                        <div className="w-4 h-4 border-2 border-slate-400 border-t-slate-700 rounded-full animate-spin"></div>
+                      ) : (
+                        <Upload className="w-4 h-4" />
+                      )}
+                      {uploadingLogo ? 'Uploading...' : 'Upload File'}
+                      <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={uploadingLogo} />
+                    </label>
+                  </div>
+                  <p className="text-xs text-slate-500">Provide an image URL or upload a file directly.</p>
+                </div>
+              </div>
             </div>
             
             <div>

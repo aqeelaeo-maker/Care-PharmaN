@@ -75,10 +75,9 @@ export default function App() {
           <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
             <Route index element={<Dashboard />} />
             <Route path="pos" element={<POS />} />
-            <Route path="inventory" element={<Inventory />} />
+            <Route path="products" element={<Inventory />} />
             <Route path="customers" element={<Placeholder title="Customers" />} />
             <Route path="vendors" element={<Placeholder title="Vendors" />} />
-            <Route path="purchases" element={<Placeholder title="Purchases" />} />
             <Route path="reports" element={<Placeholder title="Reports" />} />
             <Route path="settings" element={<Settings />} />
             <Route path="*" element={<Navigate to="/" replace />} />

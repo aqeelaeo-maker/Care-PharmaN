@@ -14,29 +14,44 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
   { icon: ShoppingCart, label: 'POS Terminal', path: '/pos' },
-  { icon: Package, label: 'Inventory', path: '/inventory' },
+  { icon: Package, label: 'Products', path: '/products' },
   { icon: Users, label: 'Customers', path: '/customers' },
   { icon: Truck, label: 'Vendors', path: '/vendors' },
-  { icon: Receipt, label: 'Purchases', path: '/purchases' },
   { icon: FileText, label: 'Reports', path: '/reports' },
   { icon: Settings, label: 'Settings', path: '/settings' },
 ];
 
 export default function Layout() {
   const { user, role, logout } = useAuth();
+  const [storeLogo, setStoreLogo] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'settings', 'store_config'), (doc) => {
+      if (doc.exists()) {
+        setStoreLogo(doc.data().logoUrl || null);
+      }
+    });
+    return () => unsub();
+  }, []);
 
   return (
     <div className="flex h-screen bg-slate-50 text-slate-900 font-sans overflow-hidden">
       {/* Sidebar */}
       <aside className="w-64 bg-slate-900 flex flex-col hidden md:flex shrink-0">
         <div className="p-6 flex items-center gap-3">
-          <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/20">
-            <Pill className="w-5 h-5 text-white" />
-          </div>
+          {storeLogo ? (
+            <img src={storeLogo} alt="Store Logo" className="w-8 h-8 rounded-lg object-cover shadow-lg shadow-emerald-500/20" />
+          ) : (
+            <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/20 shrink-0">
+              <Pill className="w-5 h-5 text-white" />
+            </div>
+          )}
           <span className="text-xl font-bold text-white tracking-tight">CarePharma</span>
         </div>
         
@@ -87,9 +102,13 @@ export default function Layout() {
         {/* Mobile Header */}
         <header className="md:hidden h-16 bg-white border-b border-slate-200 flex items-center px-4 justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/20">
-              <Pill className="w-5 h-5 text-white" />
-            </div>
+            {storeLogo ? (
+              <img src={storeLogo} alt="Store Logo" className="w-8 h-8 rounded-lg object-cover shadow-lg shadow-emerald-500/20" />
+            ) : (
+              <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/20 shrink-0">
+                <Pill className="w-5 h-5 text-white" />
+              </div>
+            )}
             <span className="font-bold text-slate-800 tracking-tight">CarePharma</span>
           </div>
           <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-sm text-slate-600 overflow-hidden">

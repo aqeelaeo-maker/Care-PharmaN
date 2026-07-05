@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   TrendingUp, 
   Users, 
@@ -18,25 +18,99 @@ import {
   BarChart,
   Bar
 } from 'recharts';
-
-const salesData = [
-  { name: 'Mon', sales: 4000 },
-  { name: 'Tue', sales: 3000 },
-  { name: 'Wed', sales: 2000 },
-  { name: 'Thu', sales: 2780 },
-  { name: 'Fri', sales: 1890 },
-  { name: 'Sat', sales: 2390 },
-  { name: 'Sun', sales: 3490 },
-];
-
-const categoryData = [
-  { name: 'Antibiotics', value: 400 },
-  { name: 'Painkillers', value: 300 },
-  { name: 'Vitamins', value: 300 },
-  { name: 'First Aid', value: 200 },
-];
+import { collection, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
 export default function Dashboard() {
+  const [dailyRevenue, setDailyRevenue] = useState(0);
+  const [totalCustomers, setTotalCustomers] = useState(0);
+  const [productsInStock, setProductsInStock] = useState(0);
+  const [lowStockCount, setLowStockCount] = useState(0);
+  const [lowStockItems, setLowStockItems] = useState<any[]>([]);
+  const [categoryData, setCategoryData] = useState<{name: string, value: number}[]>([]);
+  const [salesData, setSalesData] = useState<{name: string, sales: number}[]>([]);
+
+  useEffect(() => {
+    // Listen to Products
+    const unsubProducts = onSnapshot(collection(db, 'products'), (snapshot) => {
+      let totalStock = 0;
+      let lowCount = 0;
+      let categories: Record<string, number> = {};
+      const lowItems: any[] = [];
+
+      snapshot.docs.forEach(doc => {
+        const data = doc.data();
+        const stock = data.stock || 0;
+        totalStock += stock;
+        
+        if (stock < 20) { // arbitrary low stock threshold
+          lowCount++;
+          lowItems.push({ id: doc.id, ...data });
+        }
+
+        const category = data.category || 'Uncategorized';
+        categories[category] = (categories[category] || 0) + stock;
+      });
+
+      setProductsInStock(totalStock);
+      setLowStockCount(lowCount);
+      setLowStockItems(lowItems.slice(0, 5)); // show top 5 low items
+      
+      const catData = Object.entries(categories)
+        .map(([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 5); // top 5 categories
+      setCategoryData(catData);
+    });
+
+    // Listen to Customers
+    const unsubCustomers = onSnapshot(collection(db, 'customers'), (snapshot) => {
+      setTotalCustomers(snapshot.docs.length);
+    });
+
+    // Listen to Sales
+    const unsubSales = onSnapshot(collection(db, 'sales'), (snapshot) => {
+      let todayRev = 0;
+      
+      // We will group by day (Mon, Tue, etc.) for the last 7 days
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const currentDay = new Date().getDay();
+      const weeklySales = Array.from({ length: 7 }, (_, i) => ({
+        name: days[(currentDay - 6 + i + 7) % 7], // last 7 days order
+        sales: 0,
+        date: new Date(new Date().setDate(new Date().getDate() - (6 - i))).toDateString()
+      }));
+
+      const todayString = new Date().toDateString();
+
+      snapshot.docs.forEach(doc => {
+        const data = doc.data();
+        const total = data.total || 0;
+        const date = data.timestamp?.toDate() || new Date();
+        const dateString = date.toDateString();
+        
+        if (dateString === todayString) {
+          todayRev += total;
+        }
+
+        // Add to weekly chart
+        const dayIndex = weeklySales.findIndex(d => d.date === dateString);
+        if (dayIndex !== -1) {
+          weeklySales[dayIndex].sales += total;
+        }
+      });
+
+      setDailyRevenue(todayRev);
+      setSalesData(weeklySales);
+    });
+
+    return () => {
+      unsubProducts();
+      unsubCustomers();
+      unsubSales();
+    };
+  }, []);
+
   return (
     <div className="p-8 max-w-none flex flex-col gap-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between shrink-0">
@@ -57,10 +131,10 @@ export default function Dashboard() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 shrink-0">
         {[
-          { label: "Daily Revenue", value: "$4,289.00", icon: TrendingUp, trend: "+12.5%", color: "blue" },
-          { label: "Total Customers", value: "1,429", icon: Users, trend: "+4.1%", color: "purple" },
-          { label: "Products in Stock", value: "8,942", icon: Package, trend: "Current", color: "amber" },
-          { label: "Low Stock Items", value: "24", icon: AlertTriangle, trend: "Critical", color: "rose", alert: true },
+          { label: "Daily Revenue", value: `$${dailyRevenue.toFixed(2)}`, icon: TrendingUp, trend: "Today", color: "blue" },
+          { label: "Total Customers", value: totalCustomers.toString(), icon: Users, trend: "Total", color: "purple" },
+          { label: "Products in Stock", value: productsInStock.toString(), icon: Package, trend: "Current", color: "amber" },
+          { label: "Low Stock Items", value: lowStockCount.toString(), icon: AlertTriangle, trend: "Critical", color: "rose", alert: true },
         ].map((stat, i) => (
           <div key={i} className="bg-white p-5 rounded-[2rem] shadow-sm border border-slate-100">
             <div className="flex justify-between items-start mb-4">
@@ -74,7 +148,7 @@ export default function Dashboard() {
               </div>
               <span className={`text-xs font-bold px-2 py-1 rounded-full ${
                 stat.alert ? 'bg-rose-50 text-rose-500' :
-                stat.trend.startsWith('+') ? 'bg-emerald-50 text-emerald-500' : 'text-slate-400'
+                stat.trend === 'Today' || stat.trend === 'Current' ? 'bg-emerald-50 text-emerald-500' : 'text-slate-400'
               }`}>
                 {stat.trend}
               </span>
@@ -91,12 +165,7 @@ export default function Dashboard() {
         {/* Main Chart */}
         <div className="lg:col-span-2 bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-bold text-slate-800">Revenue Overview</h2>
-            <select className="text-sm border-slate-200 rounded-md bg-slate-50 py-1.5 px-3">
-              <option>Last 7 Days</option>
-              <option>This Month</option>
-              <option>This Year</option>
-            </select>
+            <h2 className="text-lg font-bold text-slate-800">Revenue Overview (Last 7 Days)</h2>
           </div>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -122,7 +191,7 @@ export default function Dashboard() {
 
         {/* Top Products */}
         <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm">
-          <h2 className="text-lg font-bold text-slate-800 mb-6">Top Categories</h2>
+          <h2 className="text-lg font-bold text-slate-800 mb-6">Top Categories in Stock</h2>
           <div className="h-[300px] w-full">
              <ResponsiveContainer width="100%" height="100%">
               <BarChart data={categoryData} layout="vertical" margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
@@ -144,38 +213,43 @@ export default function Dashboard() {
           <button className="text-sm text-emerald-600 font-bold hover:text-emerald-700">View All</button>
         </div>
         <div className="overflow-x-auto flex-1">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="text-slate-400 text-[10px] uppercase font-bold tracking-widest border-b border-slate-50">
-                <th className="pb-3 px-2">Medicine Name</th>
-                <th className="pb-3 px-2">Category / Batch No.</th>
-                <th className="pb-3 px-2 text-center">Stock Status</th>
-                <th className="pb-3 px-2">Expiry</th>
-                <th className="pb-3 px-2 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {[
-                { name: 'Amoxicillin 500mg', batch: 'BTH-8932', stock: 45, date: 'Oct 2026', status: 'Warning', category: 'Antibiotics' },
-                { name: 'Metformin HCl', batch: 'BTH-1029', stock: 120, date: 'Jan 2027', status: 'Warning', category: 'Antidiabetic' },
-                { name: 'Atorvastatin 20mg', batch: 'BTH-4451', stock: 12, date: 'Mar 2026', status: 'Critical', category: 'Cholesterol' },
-              ].map((item, i) => (
-                <tr key={i} className="hover:bg-slate-50/50 transition-colors text-sm">
-                  <td className="py-4 px-2 font-semibold text-slate-700">{item.name}</td>
-                  <td className="py-4 px-2 text-slate-500 font-mono">{item.batch}</td>
-                  <td className="py-4 px-2">
-                    <div className="w-24 bg-slate-100 h-1.5 rounded-full overflow-hidden mx-auto">
-                      <div className={`h-full ${item.status === 'Critical' ? 'bg-rose-500' : 'bg-amber-500'}`} style={{ width: item.status === 'Critical' ? '12%' : '45%' }}></div>
-                    </div>
-                  </td>
-                  <td className={`py-4 px-2 font-medium ${item.status === 'Critical' ? 'text-rose-500' : 'text-slate-500'}`}>{item.date}</td>
-                  <td className="py-4 px-2 text-right">
-                    <button className="px-3 py-1 bg-slate-100 rounded-lg font-bold text-[10px] uppercase hover:bg-slate-200 transition-colors text-slate-700">Reorder</button>
-                  </td>
+          {lowStockItems.length === 0 ? (
+            <div className="text-center py-8 text-slate-400 font-medium">All stocks are optimal.</div>
+          ) : (
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="text-slate-400 text-[10px] uppercase font-bold tracking-widest border-b border-slate-50">
+                  <th className="pb-3 px-2">Medicine Name</th>
+                  <th className="pb-3 px-2">Category</th>
+                  <th className="pb-3 px-2 text-center">Stock Status</th>
+                  <th className="pb-3 px-2 text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {lowStockItems.map((item, i) => {
+                  const percent = Math.min((item.stock / 20) * 100, 100);
+                  const isCritical = item.stock < 10;
+                  return (
+                    <tr key={item.id} className="hover:bg-slate-50/50 transition-colors text-sm">
+                      <td className="py-4 px-2 font-semibold text-slate-700">{item.name}</td>
+                      <td className="py-4 px-2 text-slate-500 font-mono">{item.category}</td>
+                      <td className="py-4 px-2">
+                        <div className="flex flex-col items-center gap-1">
+                          <span className={`text-xs font-bold ${isCritical ? 'text-rose-500' : 'text-amber-500'}`}>{item.stock} in stock</span>
+                          <div className="w-24 bg-slate-100 h-1.5 rounded-full overflow-hidden mx-auto">
+                            <div className={`h-full ${isCritical ? 'bg-rose-500' : 'bg-amber-500'}`} style={{ width: `${percent}%` }}></div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-4 px-2 text-right">
+                        <button className="px-3 py-1 bg-slate-100 rounded-lg font-bold text-[10px] uppercase hover:bg-slate-200 transition-colors text-slate-700">Reorder</button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 
