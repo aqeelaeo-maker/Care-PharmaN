@@ -10,12 +10,11 @@ export default function Inventory() {
   
   const [newProduct, setNewProduct] = useState({
     name: '',
-    generic: '',
-    category: '',
+    batch: '',
     stock: 0,
-    unit: 'Strip',
     price: 0,
-    status: 'In Stock'
+    status: 'In Stock',
+    expiryDate: ''
   });
 
   useEffect(() => {
@@ -40,7 +39,7 @@ export default function Inventory() {
         price: Number(newProduct.price)
       });
       setIsAddModalOpen(false);
-      setNewProduct({ name: '', generic: '', category: '', stock: 0, unit: 'Strip', price: 0, status: 'In Stock' });
+      setNewProduct({ name: '', batch: '', stock: 0, price: 0, status: 'In Stock', expiryDate: '' });
     } catch (err) {
       console.error("Error adding product", err);
     }
@@ -58,7 +57,7 @@ export default function Inventory() {
 
   const filteredProducts = products.filter(p => 
     p.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    p.category?.toLowerCase().includes(searchTerm.toLowerCase())
+    p.batch?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -107,7 +106,7 @@ export default function Inventory() {
             <thead className="bg-white sticky top-0 z-10">
               <tr className="text-slate-400 text-[10px] uppercase font-bold tracking-widest border-b border-slate-50">
                 <th className="py-4 px-6">Product Name</th>
-                <th className="py-4 px-6">Category</th>
+                <th className="py-4 px-6">Batch Number</th>
                 <th className="py-4 px-6 text-right">Stock</th>
                 <th className="py-4 px-6 text-right">Price</th>
                 <th className="py-4 px-6">Status</th>
@@ -121,9 +120,9 @@ export default function Inventory() {
                     <div className="text-sm font-semibold text-slate-800">{item.name}</div>
                     <div className="text-xs text-slate-400 font-mono">ID: {item.id.slice(0, 8).toUpperCase()}</div>
                   </td>
-                  <td className="py-4 px-6 text-sm text-slate-500">{item.category}</td>
+                  <td className="py-4 px-6 text-sm text-slate-500 font-mono">{item.batch || '-'}</td>
                   <td className="py-4 px-6 text-sm text-slate-800 text-right">
-                    <span className="font-bold">{item.stock}</span> <span className="text-slate-400 text-xs ml-1">{item.unit}</span>
+                    <span className="font-bold">{item.stock}</span>
                   </td>
                   <td className="py-4 px-6 text-sm font-bold text-slate-800 text-right">
                     ${Number(item.price).toFixed(2)}
@@ -191,23 +190,14 @@ export default function Inventory() {
                   <label className="block text-sm font-bold text-slate-700 mb-1">Product Name</label>
                   <input type="text" required value={newProduct.name} onChange={e => setNewProduct({...newProduct, name: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" placeholder="e.g. Paracetamol 500mg" />
                 </div>
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1">Generic Name</label>
-                  <input type="text" value={newProduct.generic} onChange={e => setNewProduct({...newProduct, generic: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" placeholder="e.g. Acetaminophen" />
-                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-1">Category</label>
-                    <input type="text" required value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" placeholder="e.g. Painkillers" />
+                    <label className="block text-sm font-bold text-slate-700 mb-1">Batch Number</label>
+                    <input type="text" required value={newProduct.batch} onChange={e => setNewProduct({...newProduct, batch: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" placeholder="e.g. BTH-1029" />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-1">Unit</label>
-                    <select value={newProduct.unit} onChange={e => setNewProduct({...newProduct, unit: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
-                      <option value="Strip">Strip</option>
-                      <option value="Box">Box</option>
-                      <option value="Bottle">Bottle</option>
-                      <option value="Piece">Piece</option>
-                    </select>
+                    <label className="block text-sm font-bold text-slate-700 mb-1">Expiry Date</label>
+                    <input type="date" required value={newProduct.expiryDate} onChange={e => setNewProduct({...newProduct, expiryDate: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">

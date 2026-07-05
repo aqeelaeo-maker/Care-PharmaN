@@ -9,6 +9,7 @@ import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import POS from './pages/POS';
 import Inventory from './pages/Inventory';
+import Stock from './pages/Stock';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
 import Customers from './pages/Customers';
@@ -72,6 +73,7 @@ export default function App() {
             <Route index element={<Dashboard />} />
             <Route path="pos" element={<POS />} />
             <Route path="products" element={<Inventory />} />
+            <Route path="stock" element={<Stock />} />
             <Route path="customers" element={<Customers />} />
             <Route path="vendors" element={<Vendors />} />
             <Route path="reports" element={<Reports />} />

@@ -10,7 +10,8 @@ import {
   FileText,
   Settings,
   LogOut,
-  Pill
+  Pill,
+  Archive
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
@@ -21,6 +22,7 @@ const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
   { icon: ShoppingCart, label: 'POS Terminal', path: '/pos' },
   { icon: Package, label: 'Products', path: '/products' },
+  { icon: Archive, label: 'Stock', path: '/stock' },
   { icon: Users, label: 'Customers', path: '/customers' },
   { icon: Truck, label: 'Vendors', path: '/vendors' },
   { icon: FileText, label: 'Reports', path: '/reports' },
