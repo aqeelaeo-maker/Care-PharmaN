@@ -184,6 +184,7 @@ export default function Invoices() {
                     onChange={e => setEditData({...editData, paymentMethod: e.target.value})} 
                     className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                   >
+                    <option value="Standard">Standard</option>
                     <option value="Cash">Cash</option>
                     <option value="Card">Card</option>
                   </select>

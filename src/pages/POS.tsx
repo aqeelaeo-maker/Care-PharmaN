@@ -84,7 +84,6 @@ export default function POS() {
         customerId: selectedCustomerId || null,
         customerName: selectedCustomer ? selectedCustomer.name : 'Walk-in Customer',
         subtotal,
-        tax,
         total,
         paymentMethod: method,
         timestamp: new Date()
@@ -110,11 +109,10 @@ export default function POS() {
   };
 
   const subtotal = cart.reduce((sum, item) => sum + (item.product.price * item.qty), 0);
-  const tax = subtotal * 0.05; // 5% tax
-  const total = subtotal + tax;
+  const total = subtotal;
 
   return (
-    <div className="p-8 max-w-7xl mx-auto h-full flex flex-col gap-6">
+    <div className="p-8 max-w-7xl mx-auto min-h-full flex flex-col gap-6">
       <div className="flex items-center gap-4 mb-2 shrink-0">
         <button onClick={() => navigate('/invoices')} className="p-2 text-slate-400 hover:text-slate-800 transition-colors bg-white rounded-xl shadow-sm border border-slate-200">
           <ArrowLeft className="w-5 h-5" />
@@ -125,10 +123,10 @@ export default function POS() {
         </div>
       </div>
 
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-0">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         
         {/* Left Side: Customer Selection */}
-        <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col p-6 overflow-y-auto">
+        <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col p-6 sticky top-8">
           <h2 className="font-bold text-slate-800 text-lg mb-4 flex items-center gap-2">
             <User className="w-5 h-5 text-emerald-600" /> Customer Details
           </h2>
@@ -176,8 +174,8 @@ export default function POS() {
         </div>
 
         {/* Right Side: Product Selection & Invoice Items */}
-        <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col overflow-hidden">
-          <div className="p-6 border-b border-slate-100 flex-shrink-0">
+        <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col">
+          <div className="p-6 border-b border-slate-100 flex-shrink-0 sticky top-0 bg-white z-10 rounded-t-[2.5rem]">
             <h2 className="font-bold text-slate-800 text-lg mb-4 flex items-center gap-2">
               <Package className="w-5 h-5 text-emerald-600" /> Add Products
             </h2>
@@ -202,7 +200,7 @@ export default function POS() {
             </div>
           </div>
 
-          <div className="flex-1 overflow-auto p-6 space-y-4">
+          <div className="flex-1 p-6 space-y-4">
             {cart.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-slate-400">
                 <div className="w-16 h-16 bg-slate-50 rounded-[2rem] flex items-center justify-center mb-4">
@@ -232,28 +230,15 @@ export default function POS() {
             )}
           </div>
 
-          <div className="p-6 bg-slate-50 space-y-4 rounded-t-[2.5rem] border-t border-slate-100 flex-shrink-0">
-            <div className="flex justify-between text-sm text-slate-500 font-medium">
-              <span>Subtotal</span>
-              <span className="text-slate-800">${subtotal.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between text-sm text-slate-500 font-medium">
-              <span>Tax (5%)</span>
-              <span className="text-slate-800">${tax.toFixed(2)}</span>
-            </div>
-            <div className="pt-4 border-t border-slate-200 flex justify-between items-center mb-6">
+          <div className="p-6 bg-slate-50 space-y-4 rounded-t-[2.5rem] border-t border-slate-100 flex-shrink-0 sticky bottom-0 z-10">
+            <div className="flex justify-between items-center mb-6">
               <span className="text-lg font-bold text-slate-800">Total</span>
               <span className="text-2xl font-black text-emerald-600">${total.toFixed(2)}</span>
             </div>
             
-            <div className="grid grid-cols-2 gap-3">
-              <button disabled={isProcessing || cart.length === 0} onClick={() => processPayment('Cash')} className="flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 py-3 rounded-xl font-bold shadow-sm hover:bg-slate-50 transition-colors disabled:opacity-50">
-                <Banknote className="w-5 h-5" /> {isProcessing ? '...' : 'Cash'}
-              </button>
-              <button disabled={isProcessing || cart.length === 0} onClick={() => processPayment('Card')} className="flex items-center justify-center gap-2 bg-emerald-600 text-white py-3 rounded-xl font-bold shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-colors disabled:opacity-50">
-                <CreditCard className="w-5 h-5" /> {isProcessing ? '...' : 'Card'}
-              </button>
-            </div>
+            <button disabled={isProcessing || cart.length === 0} onClick={() => processPayment('Standard')} className="w-full flex items-center justify-center gap-2 bg-emerald-600 text-white py-3 rounded-xl font-bold shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-colors disabled:opacity-50">
+               {isProcessing ? 'Saving...' : 'Save Invoice'}
+            </button>
           </div>
         </div>
 
