@@ -10,12 +10,22 @@ export default function Inventory() {
   
   const [newProduct, setNewProduct] = useState({
     name: '',
+    category: 'Medicines',
+    subCategory: 'Painkillers',
+    company: '',
     batch: '',
     stock: 0,
     price: 0,
-    status: 'In Stock',
+    status: 'Out of Stock',
     expiryDate: ''
   });
+
+  const CATEGORIES = {
+    'Medicines': ['Painkillers', 'Antibiotics', 'Vitamins & Supplements', 'Cold & Flu', 'First Aid'],
+    'Personal Care': ['Skincare', 'Haircare', 'Oral Care', 'Bath & Body'],
+    'Baby Care': ['Baby Food', 'Diapers & Wipes', 'Baby Skincare'],
+    'Equipment': ['Monitors', 'Support Braces', 'Thermometers']
+  };
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'products'), (snapshot) => {
@@ -31,15 +41,16 @@ export default function Inventory() {
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const status = newProduct.stock < 10 ? 'Critical' : newProduct.stock < 30 ? 'Low Stock' : 'In Stock';
       await addDoc(collection(db, 'products'), {
         ...newProduct,
-        status,
-        stock: Number(newProduct.stock),
-        price: Number(newProduct.price)
+        stock: 0,
+        price: 0,
+        batch: '',
+        expiryDate: '',
+        status: 'Out of Stock'
       });
       setIsAddModalOpen(false);
-      setNewProduct({ name: '', batch: '', stock: 0, price: 0, status: 'In Stock', expiryDate: '' });
+      setNewProduct({ name: '', category: 'Medicines', subCategory: 'Painkillers', company: '', batch: '', stock: 0, price: 0, status: 'Out of Stock', expiryDate: '' });
     } catch (err) {
       console.error("Error adding product", err);
     }
@@ -106,7 +117,8 @@ export default function Inventory() {
             <thead className="bg-white sticky top-0 z-10">
               <tr className="text-slate-400 text-[10px] uppercase font-bold tracking-widest border-b border-slate-50">
                 <th className="py-4 px-6">Product Name</th>
-                <th className="py-4 px-6">Batch Number</th>
+                <th className="py-4 px-6">Category</th>
+                <th className="py-4 px-6">Company</th>
                 <th className="py-4 px-6 text-right">Stock</th>
                 <th className="py-4 px-6 text-right">Price</th>
                 <th className="py-4 px-6">Status</th>
@@ -120,9 +132,13 @@ export default function Inventory() {
                     <div className="text-sm font-semibold text-slate-800">{item.name}</div>
                     <div className="text-xs text-slate-400 font-mono">ID: {item.id.slice(0, 8).toUpperCase()}</div>
                   </td>
-                  <td className="py-4 px-6 text-sm text-slate-500 font-mono">{item.batch || '-'}</td>
+                  <td className="py-4 px-6">
+                    <div className="text-sm text-slate-800">{item.category}</div>
+                    <div className="text-xs text-slate-400">{item.subCategory}</div>
+                  </td>
+                  <td className="py-4 px-6 text-sm text-slate-500">{item.company || '-'}</td>
                   <td className="py-4 px-6 text-sm text-slate-800 text-right">
-                    <span className="font-bold">{item.stock}</span>
+                    <span className="font-bold">{item.stock || 0}</span>
                   </td>
                   <td className="py-4 px-6 text-sm font-bold text-slate-800 text-right">
                     ${Number(item.price).toFixed(2)}
@@ -190,24 +206,43 @@ export default function Inventory() {
                   <label className="block text-sm font-bold text-slate-700 mb-1">Product Name</label>
                   <input type="text" required value={newProduct.name} onChange={e => setNewProduct({...newProduct, name: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" placeholder="e.g. Paracetamol 500mg" />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-1">Batch Number</label>
-                    <input type="text" required value={newProduct.batch} onChange={e => setNewProduct({...newProduct, batch: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" placeholder="e.g. BTH-1029" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-1">Expiry Date</label>
-                    <input type="date" required value={newProduct.expiryDate} onChange={e => setNewProduct({...newProduct, expiryDate: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" />
-                  </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">Company</label>
+                  <input type="text" required value={newProduct.company} onChange={e => setNewProduct({...newProduct, company: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" placeholder="e.g. Pfizer" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-1">Initial Stock</label>
-                    <input type="number" required min="0" value={newProduct.stock} onChange={e => setNewProduct({...newProduct, stock: Number(e.target.value)})} className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" />
+                    <label className="block text-sm font-bold text-slate-700 mb-1">Category</label>
+                    <select 
+                      required 
+                      value={newProduct.category} 
+                      onChange={e => {
+                        const newCat = e.target.value;
+                        setNewProduct({
+                          ...newProduct, 
+                          category: newCat,
+                          subCategory: CATEGORIES[newCat as keyof typeof CATEGORIES][0]
+                        });
+                      }} 
+                      className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                    >
+                      {Object.keys(CATEGORIES).map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-1">Price ($)</label>
-                    <input type="number" required min="0" step="0.01" value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: Number(e.target.value)})} className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" />
+                    <label className="block text-sm font-bold text-slate-700 mb-1">Subcategory</label>
+                    <select 
+                      required 
+                      value={newProduct.subCategory} 
+                      onChange={e => setNewProduct({...newProduct, subCategory: e.target.value})} 
+                      className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                    >
+                      {CATEGORIES[newProduct.category as keyof typeof CATEGORIES]?.map((sub: string) => (
+                        <option key={sub} value={sub}>{sub}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               </form>

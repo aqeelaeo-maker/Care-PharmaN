@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, FileText, Eye } from 'lucide-react';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { Search, Plus, FileText, Eye, Edit, Trash2, X } from 'lucide-react';
+import { collection, onSnapshot, query, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useNavigate } from 'react-router-dom';
 
@@ -8,6 +8,9 @@ export default function Invoices() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [invoices, setInvoices] = useState<any[]>([]);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
+  const [editData, setEditData] = useState({ paymentMethod: 'Cash' });
 
   useEffect(() => {
     const q = query(collection(db, 'sales'), orderBy('timestamp', 'desc'));
@@ -20,6 +23,36 @@ export default function Invoices() {
     });
     return () => unsub();
   }, []);
+
+  const handleDelete = async (id: string) => {
+    if (confirm('Are you sure you want to delete this invoice? This action cannot be undone.')) {
+      try {
+        await deleteDoc(doc(db, 'sales', id));
+      } catch (err) {
+        console.error('Error deleting invoice', err);
+      }
+    }
+  };
+
+  const openEditModal = (invoice: any) => {
+    setSelectedInvoice(invoice);
+    setEditData({ paymentMethod: invoice.paymentMethod || 'Cash' });
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedInvoice) return;
+    try {
+      await updateDoc(doc(db, 'sales', selectedInvoice.id), {
+        paymentMethod: editData.paymentMethod
+      });
+      setIsEditModalOpen(false);
+      setSelectedInvoice(null);
+    } catch (err) {
+      console.error('Error updating invoice', err);
+    }
+  };
 
   const filteredInvoices = invoices.filter(inv => 
     inv.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -100,12 +133,22 @@ export default function Invoices() {
                       </span>
                     </td>
                     <td className="py-4 px-6 text-right">
-                      <button 
-                        className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors"
-                        title="View Details"
-                      >
-                        <Eye className="w-5 h-5" />
-                      </button>
+                      <div className="flex justify-end gap-2">
+                        <button 
+                          onClick={() => openEditModal(inv)}
+                          className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors"
+                          title="Edit"
+                        >
+                          <Edit className="w-5 h-5" />
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(inv.id)}
+                          className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -121,6 +164,44 @@ export default function Invoices() {
           </table>
         </div>
       </div>
+
+      {isEditModalOpen && selectedInvoice && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2.5rem] w-full max-w-sm shadow-2xl overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between shrink-0">
+              <h2 className="text-xl font-bold text-slate-800">Edit Invoice</h2>
+              <button onClick={() => setIsEditModalOpen(false)} className="p-2 text-slate-400 hover:bg-slate-100 rounded-full transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto flex-1">
+              <form id="edit-invoice-form" onSubmit={handleUpdate} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">Payment Method</label>
+                  <select 
+                    value={editData.paymentMethod} 
+                    onChange={e => setEditData({...editData, paymentMethod: e.target.value})} 
+                    className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  >
+                    <option value="Cash">Cash</option>
+                    <option value="Card">Card</option>
+                  </select>
+                </div>
+              </form>
+            </div>
+            
+            <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 shrink-0">
+              <button onClick={() => setIsEditModalOpen(false)} className="px-6 py-3 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-200 transition-colors">
+                Cancel
+              </button>
+              <button type="submit" form="edit-invoice-form" className="px-6 py-3 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/20 transition-all">
+                Update
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
