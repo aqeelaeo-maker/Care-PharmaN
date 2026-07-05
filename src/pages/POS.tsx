@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, Plus, Minus, CreditCard, Banknote, User, ArrowLeft, Package } from 'lucide-react';
+import { Trash2, Plus, Minus, User, ArrowLeft, Package, Printer } from 'lucide-react';
 import { collection, onSnapshot, addDoc, doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useNavigate } from 'react-router-dom';
+import { printInvoiceHtml } from '../utils/print';
 
 export default function POS() {
   const navigate = useNavigate();
@@ -67,6 +68,22 @@ export default function POS() {
 
   const removeFromCart = (id: string) => {
     setCart(cart.filter(item => item.product.id !== id));
+  };
+
+  const handlePrintCurrentInvoice = () => {
+    if (cart.length === 0) return;
+    const tempInvoice = {
+      items: cart.map(item => ({
+        productId: item.product.id,
+        name: item.product.name,
+        qty: item.qty,
+        price: item.product.price
+      })),
+      customerName: selectedCustomer ? selectedCustomer.name : 'Walk-in Customer',
+      total,
+      timestamp: new Date()
+    };
+    printInvoiceHtml(tempInvoice);
   };
 
   const processPayment = async (method: string) => {
@@ -236,9 +253,14 @@ export default function POS() {
               <span className="text-2xl font-black text-emerald-600">${total.toFixed(2)}</span>
             </div>
             
-            <button disabled={isProcessing || cart.length === 0} onClick={() => processPayment('Standard')} className="w-full flex items-center justify-center gap-2 bg-emerald-600 text-white py-3 rounded-xl font-bold shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-colors disabled:opacity-50">
-               {isProcessing ? 'Saving...' : 'Save Invoice'}
-            </button>
+            <div className="flex gap-3">
+              <button onClick={handlePrintCurrentInvoice} disabled={cart.length === 0} className="w-1/3 flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 py-3 rounded-xl font-bold shadow-sm hover:bg-slate-50 transition-colors disabled:opacity-50">
+                <Printer className="w-5 h-5" /> Print
+              </button>
+              <button disabled={isProcessing || cart.length === 0} onClick={() => processPayment('Standard')} className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 text-white py-3 rounded-xl font-bold shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-colors disabled:opacity-50">
+                 {isProcessing ? 'Saving...' : 'Save Invoice'}
+              </button>
+            </div>
           </div>
         </div>
 

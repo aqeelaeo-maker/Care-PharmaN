@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, FileText, Eye, Edit, Trash2, X } from 'lucide-react';
+import { Search, Plus, FileText, Eye, Edit, Trash2, X, Printer } from 'lucide-react';
 import { collection, onSnapshot, query, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useNavigate } from 'react-router-dom';
+import { printInvoiceHtml } from '../utils/print';
 
 export default function Invoices() {
   const navigate = useNavigate();
@@ -134,6 +135,13 @@ export default function Invoices() {
                     </td>
                     <td className="py-4 px-6 text-right">
                       <div className="flex justify-end gap-2">
+                        <button 
+                          onClick={() => printInvoiceHtml(inv)}
+                          className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
+                          title="Print"
+                        >
+                          <Printer className="w-5 h-5" />
+                        </button>
                         <button 
                           onClick={() => openEditModal(inv)}
                           className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors"
