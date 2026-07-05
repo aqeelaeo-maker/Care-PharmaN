@@ -68,8 +68,9 @@ export default function Stock() {
   };
 
   const filteredProducts = products.filter(p => 
-    p.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    p.batch?.toLowerCase().includes(searchTerm.toLowerCase())
+    p.stock > 0 &&
+    (p.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+     p.batch?.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   return (
@@ -84,7 +85,7 @@ export default function Stock() {
             onClick={() => openUpdateModal()}
             className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-semibold shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-colors"
           >
-            <Plus className="w-4 h-4" /> Update Stock
+            <Plus className="w-4 h-4" /> Add Stock
           </button>
         </div>
       </div>
@@ -158,7 +159,7 @@ export default function Stock() {
                         onClick={() => openUpdateModal(item)}
                         className="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-200 transition-colors"
                       >
-                        Update Stock
+                        Add Stock
                       </button>
                     </td>
                   </tr>
@@ -181,7 +182,7 @@ export default function Stock() {
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-[2.5rem] w-full max-w-md shadow-2xl overflow-hidden flex flex-col">
             <div className="p-6 border-b border-slate-100 flex items-center justify-between shrink-0">
-              <h2 className="text-xl font-bold text-slate-800">Update Stock</h2>
+              <h2 className="text-xl font-bold text-slate-800">Add Stock</h2>
               <button onClick={() => setIsUpdateModalOpen(false)} className="p-2 text-slate-400 hover:bg-slate-100 rounded-full transition-colors">
                 <X className="w-5 h-5" />
               </button>
@@ -246,7 +247,7 @@ export default function Stock() {
                 Cancel
               </button>
               <button type="submit" form="update-stock-form" disabled={!selectedProductId} className="px-6 py-3 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/20 transition-all disabled:opacity-50">
-                Update
+                Save
               </button>
             </div>
           </div>
