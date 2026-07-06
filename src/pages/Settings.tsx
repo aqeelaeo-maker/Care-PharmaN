@@ -21,7 +21,8 @@ export default function Settings() {
     contactNumber2: '',
     address: '',
     email: '',
-    website: ''
+    website: '',
+    termsAndConditions: ''
   });
 
   const isSuperAdmin = user?.email === 'aqeelaeo@gmail.com';
@@ -383,6 +384,18 @@ export default function Settings() {
                 onChange={handleStoreConfigChange}
                 placeholder="https://store.com"
                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-bold text-slate-700 mb-2">Terms and Conditions</label>
+              <textarea 
+                name="termsAndConditions"
+                value={storeConfig.termsAndConditions}
+                onChange={handleStoreConfigChange}
+                placeholder="Enter terms and conditions to be printed on invoices..."
+                rows={4}
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all resize-none"
               />
             </div>
           </div>

@@ -148,6 +148,12 @@ export const printInvoiceHtml = async (invoice: any, type: 'standard' | 'thermal
           <div class="total-section">
             <div><strong>Total:</strong> <span class="total-amount">$${Number(invoice.total).toFixed(2)}</span></div>
           </div>
+          ${storeConfig.termsAndConditions ? `
+            <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #eee; font-size: 0.9em; color: #666;">
+              <strong style="display: block; margin-bottom: 10px; color: #333;">Terms and Conditions</strong>
+              <div style="white-space: pre-wrap;">${storeConfig.termsAndConditions}</div>
+            </div>
+          ` : ''}
         </body>
       </html>
     `;
