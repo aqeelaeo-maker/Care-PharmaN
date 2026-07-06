@@ -210,7 +210,7 @@ export default function POS() {
               >
                 <option value="">Select a product...</option>
                 {products.filter(p => p.stock > 0).map(p => (
-                  <option key={p.id} value={p.id}>{p.name} - ${Number(p.price).toFixed(2)} (Stock: {p.stock})</option>
+                  <option key={p.id} value={p.id}>{p.name} - {Number(p.price).toFixed(2)} (Stock: {p.stock})</option>
                 ))}
               </select>
               <button 
@@ -236,7 +236,7 @@ export default function POS() {
                 <div key={item.product.id} className="flex gap-3 bg-white p-4 rounded-[1.5rem] border border-slate-100 shadow-sm items-center">
                   <div className="flex-1 min-w-0">
                     <h4 className="font-bold text-sm text-slate-800 truncate">{item.product.name}</h4>
-                    <div className="text-sm font-bold text-emerald-600 mt-1">${(item.product.price * item.qty).toFixed(2)}</div>
+                    <div className="text-sm font-bold text-emerald-600 mt-1">{(item.product.price * item.qty).toFixed(2)}</div>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="flex items-center bg-slate-50 rounded-xl border border-slate-200">
@@ -256,7 +256,7 @@ export default function POS() {
           <div className="p-6 bg-slate-50 space-y-4 rounded-t-[2.5rem] border-t border-slate-100 flex-shrink-0 sticky bottom-0 z-10">
             <div className="flex justify-between items-center mb-6">
               <span className="text-lg font-bold text-slate-800">Total</span>
-              <span className="text-2xl font-black text-emerald-600">${total.toFixed(2)}</span>
+              <span className="text-2xl font-black text-emerald-600">{total.toFixed(2)}</span>
             </div>
             
             <div className="flex flex-col gap-3">

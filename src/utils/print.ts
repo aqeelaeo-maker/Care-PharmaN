@@ -19,8 +19,8 @@ export const printInvoiceHtml = async (invoice: any, type: 'standard' | 'thermal
     <tr>
       <td>${item.name}</td>
       <td style="text-align: center;">${item.qty}</td>
-      <td style="text-align: right;">$${Number(item.price).toFixed(2)}</td>
-      <td style="text-align: right;">$${(item.qty * item.price).toFixed(2)}</td>
+      <td style="text-align: right;">${Number(item.price).toFixed(2)}</td>
+      <td style="text-align: right;">${(item.qty * item.price).toFixed(2)}</td>
     </tr>
   `).join('') || '';
 
@@ -30,11 +30,11 @@ export const printInvoiceHtml = async (invoice: any, type: 'standard' | 'thermal
         <div style="font-weight: 500;">${item.name}</div>
       </td>
       <td>${item.batch || '-'}</td>
-      <td style="text-align: right;">$${Number(item.tradePrice || item.price).toFixed(2)}</td>
+      <td style="text-align: right;">${Number(item.tradePrice || item.price).toFixed(2)}</td>
       <td style="text-align: right;">${item.discountPercent || 0}%</td>
-      <td style="text-align: right;">$${Number(item.price).toFixed(2)}</td>
+      <td style="text-align: right;">${Number(item.price).toFixed(2)}</td>
       <td style="text-align: center;">${item.qty}</td>
-      <td style="text-align: right;">$${(item.qty * item.price).toFixed(2)}</td>
+      <td style="text-align: right;">${(item.qty * item.price).toFixed(2)}</td>
     </tr>
   `).join('') || '';
 
@@ -102,7 +102,7 @@ export const printInvoiceHtml = async (invoice: any, type: 'standard' | 'thermal
             </tbody>
           </table>
           <div class="total-section">
-            <div>TOTAL: <span class="total-amount">$${Number(invoice.total).toFixed(2)}</span></div>
+            <div>TOTAL: <span class="total-amount">${Number(invoice.total).toFixed(2)}</span></div>
           </div>
           <div class="footer">
             Thank you for your business!
@@ -156,7 +156,7 @@ export const printInvoiceHtml = async (invoice: any, type: 'standard' | 'thermal
             </tbody>
           </table>
           <div class="total-section">
-            <div><strong>Total:</strong> <span class="total-amount">$${Number(invoice.total).toFixed(2)}</span></div>
+            <div><strong>Total:</strong> <span class="total-amount">${Number(invoice.total).toFixed(2)}</span></div>
           </div>
           ${storeConfig.termsAndConditions ? `
             <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #eee; font-size: 0.9em; color: #666;">

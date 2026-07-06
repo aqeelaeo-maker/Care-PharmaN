@@ -134,7 +134,7 @@ export default function Stock() {
                       </span>
                     </td>
                     <td className="py-4 px-6 text-right font-medium text-slate-800">
-                      ${Number(item.price || 0).toFixed(2)}
+                      {Number(item.price || 0).toFixed(2)}
                     </td>
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-2">
@@ -230,7 +230,7 @@ export default function Stock() {
                     <input type="number" required min="0" value={updateData.stock} onChange={e => setUpdateData({...updateData, stock: Number(e.target.value)})} className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-1">Price ($)</label>
+                    <label className="block text-sm font-bold text-slate-700 mb-1">Price</label>
                     <input type="number" required min="0" step="0.01" value={updateData.price} onChange={e => setUpdateData({...updateData, price: Number(e.target.value)})} className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" />
                   </div>
                 </div>

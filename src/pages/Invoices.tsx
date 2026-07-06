@@ -124,7 +124,7 @@ export default function Invoices() {
                       </span>
                     </td>
                     <td className="py-4 px-6 text-sm font-bold text-slate-800 text-right">
-                      ${Number(inv.total || 0).toFixed(2)}
+                      {Number(inv.total || 0).toFixed(2)}
                     </td>
                     <td className="py-4 px-6">
                       <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${

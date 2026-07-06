@@ -71,7 +71,7 @@ export default function Reports() {
           </div>
           <div>
             <div className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">Total Revenue</div>
-            <div className="text-2xl font-bold text-slate-800">${totalRevenue.toFixed(2)}</div>
+            <div className="text-2xl font-bold text-slate-800">{totalRevenue.toFixed(2)}</div>
           </div>
         </div>
         <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 flex items-center gap-4">
@@ -90,7 +90,7 @@ export default function Reports() {
           <div>
             <div className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">Avg. Ticket Size</div>
             <div className="text-2xl font-bold text-slate-800">
-              ${totalTransactions > 0 ? (totalRevenue / totalTransactions).toFixed(2) : '0.00'}
+              {totalTransactions > 0 ? (totalRevenue / totalTransactions).toFixed(2) : '0.00'}
             </div>
           </div>
         </div>
@@ -104,10 +104,10 @@ export default function Reports() {
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
               <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} dy={10} />
-              <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} dx={-10} tickFormatter={(val) => `$${val}`} />
+              <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} dx={-10} tickFormatter={(val) => `${val}`} />
               <Tooltip 
                 contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                formatter={(value: number) => [`$${value.toFixed(2)}`, 'Revenue']}
+                formatter={(value: number) => [`${value.toFixed(2)}`, 'Revenue']}
               />
               <Line type="monotone" dataKey="total" stroke="#10b981" strokeWidth={3} dot={false} activeDot={{ r: 8, fill: '#10b981', stroke: '#fff', strokeWidth: 2 }} />
             </LineChart>
@@ -149,7 +149,7 @@ export default function Reports() {
                     {sale.items?.length || 0} items
                   </td>
                   <td className="py-4 px-6 text-sm font-bold text-slate-800 text-right">
-                    ${Number(sale.total).toFixed(2)}
+                    {Number(sale.total).toFixed(2)}
                   </td>
                 </tr>
               ))}

@@ -133,7 +133,7 @@ export default function Dashboard() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 shrink-0">
         {[
-          { label: "Daily Revenue", value: `$${dailyRevenue.toFixed(2)}`, icon: TrendingUp, trend: "Today", color: "blue" },
+          { label: "Daily Revenue", value: `${dailyRevenue.toFixed(2)}`, icon: TrendingUp, trend: "Today", color: "blue" },
           { label: "Total Customers", value: totalCustomers.toString(), icon: Users, trend: "Total", color: "purple" },
           { label: "Products in Stock", value: productsInStock.toString(), icon: Package, trend: "Current", color: "amber" },
           { label: "Low Stock Items", value: lowStockCount.toString(), icon: AlertTriangle, trend: "Critical", color: "rose", alert: true },
