@@ -77,7 +77,10 @@ export default function POS() {
         productId: item.product.id,
         name: item.product.name,
         qty: item.qty,
-        price: item.product.price
+        price: item.product.price,
+        batch: item.product.batch || '-',
+        tradePrice: item.product.tradePrice || item.product.price,
+        discountPercent: item.product.discountPercent || 0
       })),
       customerName: selectedCustomer ? selectedCustomer.name : 'Walk-in Customer',
       total,
@@ -96,7 +99,10 @@ export default function POS() {
           productId: item.product.id,
           name: item.product.name,
           qty: item.qty,
-          price: item.product.price
+          price: item.product.price,
+          batch: item.product.batch || '-',
+          tradePrice: item.product.tradePrice || item.product.price,
+          discountPercent: item.product.discountPercent || 0
         })),
         customerId: selectedCustomerId || null,
         customerName: selectedCustomer ? selectedCustomer.name : 'Walk-in Customer',

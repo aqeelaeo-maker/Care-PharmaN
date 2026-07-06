@@ -15,11 +15,25 @@ export const printInvoiceHtml = async (invoice: any, type: 'standard' | 'thermal
     console.error('Error fetching store config', err);
   }
 
-  const itemsHtml = invoice.items?.map((item: any) => `
+  const thermalItemsHtml = invoice.items?.map((item: any) => `
     <tr>
       <td>${item.name}</td>
       <td style="text-align: center;">${item.qty}</td>
       <td style="text-align: right;">$${Number(item.price).toFixed(2)}</td>
+      <td style="text-align: right;">$${(item.qty * item.price).toFixed(2)}</td>
+    </tr>
+  `).join('') || '';
+
+  const standardItemsHtml = invoice.items?.map((item: any) => `
+    <tr>
+      <td>
+        <div style="font-weight: 500;">${item.name}</div>
+      </td>
+      <td>${item.batch || '-'}</td>
+      <td style="text-align: right;">$${Number(item.tradePrice || item.price).toFixed(2)}</td>
+      <td style="text-align: right;">${item.discountPercent || 0}%</td>
+      <td style="text-align: right;">$${Number(item.price).toFixed(2)}</td>
+      <td style="text-align: center;">${item.qty}</td>
       <td style="text-align: right;">$${(item.qty * item.price).toFixed(2)}</td>
     </tr>
   `).join('') || '';
@@ -84,7 +98,7 @@ export const printInvoiceHtml = async (invoice: any, type: 'standard' | 'thermal
               </tr>
             </thead>
             <tbody>
-              ${itemsHtml}
+              ${thermalItemsHtml}
             </tbody>
           </table>
           <div class="total-section">
@@ -129,13 +143,16 @@ export const printInvoiceHtml = async (invoice: any, type: 'standard' | 'thermal
             <thead>
               <tr>
                 <th>Description</th>
+                <th>Batch #</th>
+                <th style="text-align: right;">Trade Price</th>
+                <th style="text-align: right;">Discount</th>
+                <th style="text-align: right;">Sale Price</th>
                 <th style="text-align: center;">Qty</th>
-                <th style="text-align: right;">Price</th>
                 <th style="text-align: right;">Amount</th>
               </tr>
             </thead>
             <tbody>
-              ${itemsHtml}
+              ${standardItemsHtml}
             </tbody>
           </table>
           <div class="total-section">
