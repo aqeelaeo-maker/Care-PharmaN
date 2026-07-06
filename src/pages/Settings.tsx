@@ -15,6 +15,7 @@ export default function Settings() {
   const [savingConfig, setSavingConfig] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [storeConfig, setStoreConfig] = useState({
+    name: '',
     logoUrl: '',
     contactNumber1: '',
     contactNumber2: '',
@@ -54,16 +55,22 @@ export default function Settings() {
     try {
       setUploadingLogo(true);
       setError('');
-      const storageRef = ref(storage, `store_assets/logo_${Date.now()}_${file.name}`);
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
-      setStoreConfig(prev => ({ ...prev, logoUrl: url }));
-      setSuccess('Logo uploaded successfully. Remember to save configuration.');
-      setTimeout(() => setSuccess(''), 3000);
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setStoreConfig(prev => ({ ...prev, logoUrl: reader.result as string }));
+        setSuccess('Logo uploaded successfully. Remember to save configuration.');
+        setTimeout(() => setSuccess(''), 3000);
+        setUploadingLogo(false);
+      };
+      reader.onerror = () => {
+        setError("Failed to read the file.");
+        setUploadingLogo(false);
+      };
+      reader.readAsDataURL(file);
     } catch (err) {
-      console.error("Error uploading logo:", err);
-      setError("Failed to upload logo. Please check your storage permissions or use a URL instead.");
-    } finally {
+      console.error("Error processing logo:", err);
+      setError("Failed to upload logo.");
       setUploadingLogo(false);
     }
   };
@@ -276,6 +283,18 @@ export default function Settings() {
         
         <form onSubmit={handleSaveStoreConfig} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="md:col-span-2">
+              <label className="block text-sm font-bold text-slate-700 mb-2">Store Name</label>
+              <input 
+                type="text" 
+                name="name"
+                value={storeConfig.name}
+                onChange={handleStoreConfigChange}
+                placeholder="e.g. My Pharmacy Store"
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+              />
+            </div>
+
             <div className="md:col-span-2">
               <label className="block text-sm font-bold text-slate-700 mb-2">Store Logo</label>
               <div className="flex gap-4 items-start">
