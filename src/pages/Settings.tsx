@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Plus, Trash2, Mail, AlertCircle, CheckCircle2, Upload } from 'lucide-react';
+import { Shield, Plus, Trash2, Mail, AlertCircle, CheckCircle2, Upload, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { db, storage } from '../lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
@@ -300,7 +300,17 @@ export default function Settings() {
               <label className="block text-sm font-bold text-slate-700 mb-2">Store Logo</label>
               <div className="flex gap-4 items-start">
                 {storeConfig.logoUrl && (
-                  <img src={storeConfig.logoUrl} alt="Logo Preview" className="w-16 h-16 rounded-xl object-cover border border-slate-200 shrink-0 bg-white" />
+                  <div className="relative group shrink-0">
+                    <img src={storeConfig.logoUrl} alt="Logo Preview" className="w-16 h-16 rounded-xl object-contain border border-slate-200 bg-white" />
+                    <button
+                      type="button"
+                      onClick={() => setStoreConfig(prev => ({ ...prev, logoUrl: '' }))}
+                      className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                      title="Remove Logo"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
                 )}
                 <div className="flex-1 space-y-3">
                   <div className="flex gap-3">
