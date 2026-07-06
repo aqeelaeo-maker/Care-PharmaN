@@ -7,7 +7,7 @@ export const printInvoiceHtml = async (invoice: any, type: 'standard' | 'thermal
 
   let storeConfig: any = {};
   try {
-    const configDoc = await getDoc(doc(db, 'settings', 'store'));
+    const configDoc = await getDoc(doc(db, 'settings', 'store_config'));
     if (configDoc.exists()) {
       storeConfig = configDoc.data();
     }
