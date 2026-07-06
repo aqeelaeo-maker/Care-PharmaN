@@ -103,9 +103,7 @@ export const printInvoiceHtml = async (invoice: any, type: 'standard' | 'thermal
           <title>Invoice ${invoice.id ? `INV-${invoice.id.slice(0,8).toUpperCase()}` : 'Preview'}</title>
           <style>
             body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #333; max-width: 800px; margin: 0 auto; }
-            .header-top { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 30px; }
-            .header-top h1 { margin: 0 0 10px 0; color: #10b981; }
-            .company-info { text-align: right; }
+            .invoice-meta { border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 30px; text-align: left; }
             .details { margin-bottom: 30px; line-height: 1.6; }
             table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
             th { background: #f8fafc; border-bottom: 2px solid #eee; padding: 12px 8px; text-align: left; font-weight: 600; color: #64748b; text-transform: uppercase; font-size: 12px; }
@@ -118,15 +116,10 @@ export const printInvoiceHtml = async (invoice: any, type: 'standard' | 'thermal
           </style>
         </head>
         <body>
-          <div class="header-top">
-            <div>
-              <h1>INVOICE</h1>
-              ${invoice.id ? `<div><strong>Invoice #:</strong> INV-${invoice.id.slice(0,8).toUpperCase()}</div>` : ''}
-              <div><strong>Date:</strong> ${dateStr}</div>
-            </div>
-            <div class="company-info">
-              ${companyHeaderHtml}
-            </div>
+          ${companyHeaderHtml}
+          <div class="invoice-meta">
+            ${invoice.id ? `<div><strong>Invoice #:</strong> INV-${invoice.id.slice(0,8).toUpperCase()}</div>` : ''}
+            <div><strong>Date:</strong> ${dateStr}</div>
           </div>
           <div class="details">
             <div><strong>Bill To:</strong></div>
