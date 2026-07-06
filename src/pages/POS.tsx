@@ -7,7 +7,7 @@ import { printInvoiceHtml } from '../utils/print';
 
 export default function POS() {
   const navigate = useNavigate();
-  const [cart, setCart] = useState<{product: any, qty: number}[]>([]);
+  const [cart, setCart] = useState<{product: any, qty: number, discountPercent: number}[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
   
@@ -48,7 +48,7 @@ export default function POS() {
       }
     } else {
       if (product.stock > 0) {
-        setCart([...cart, { product, qty: 1 }]);
+        setCart([...cart, { product, qty: 1, discountPercent: product.discountPercent || 0 }]);
       }
     }
     setSelectedProductId(''); // Reset after adding
@@ -66,6 +66,15 @@ export default function POS() {
     }));
   };
 
+  const updateDiscount = (id: string, discount: number) => {
+    setCart(cart.map(item => {
+      if (item.product.id === id) {
+        return { ...item, discountPercent: discount >= 0 && discount <= 100 ? discount : item.discountPercent };
+      }
+      return item;
+    }));
+  };
+
   const removeFromCart = (id: string) => {
     setCart(cart.filter(item => item.product.id !== id));
   };
@@ -73,15 +82,19 @@ export default function POS() {
   const handlePrintCurrentInvoice = (type: 'standard' | 'thermal') => {
     if (cart.length === 0) return;
     const tempInvoice = {
-      items: cart.map(item => ({
-        productId: item.product.id,
-        name: item.product.name,
-        qty: item.qty,
-        price: item.product.price,
-        batch: item.product.batch || '-',
-        tradePrice: item.product.tradePrice || item.product.price,
-        discountPercent: item.product.discountPercent || 0
-      })),
+      items: cart.map(item => {
+        const originalPrice = item.product.price;
+        const salePrice = originalPrice * (1 - (item.discountPercent || 0) / 100);
+        return {
+          productId: item.product.id,
+          name: item.product.name,
+          qty: item.qty,
+          price: salePrice,
+          batch: item.product.batch || '-',
+          tradePrice: item.product.tradePrice || originalPrice,
+          discountPercent: item.discountPercent || 0
+        };
+      }),
       customerName: selectedCustomer ? selectedCustomer.name : 'Walk-in Customer',
       total,
       timestamp: new Date()
@@ -95,15 +108,19 @@ export default function POS() {
     try {
       // 1. Create sale record
       await addDoc(collection(db, 'sales'), {
-        items: cart.map(item => ({
-          productId: item.product.id,
-          name: item.product.name,
-          qty: item.qty,
-          price: item.product.price,
-          batch: item.product.batch || '-',
-          tradePrice: item.product.tradePrice || item.product.price,
-          discountPercent: item.product.discountPercent || 0
-        })),
+        items: cart.map(item => {
+          const originalPrice = item.product.price;
+          const salePrice = originalPrice * (1 - (item.discountPercent || 0) / 100);
+          return {
+            productId: item.product.id,
+            name: item.product.name,
+            qty: item.qty,
+            price: salePrice,
+            batch: item.product.batch || '-',
+            tradePrice: item.product.tradePrice || originalPrice,
+            discountPercent: item.discountPercent || 0
+          };
+        }),
         customerId: selectedCustomerId || null,
         customerName: selectedCustomer ? selectedCustomer.name : 'Walk-in Customer',
         subtotal,
@@ -131,7 +148,10 @@ export default function POS() {
     }
   };
 
-  const subtotal = cart.reduce((sum, item) => sum + (item.product.price * item.qty), 0);
+  const subtotal = cart.reduce((sum, item) => {
+    const salePrice = item.product.price * (1 - (item.discountPercent || 0) / 100);
+    return sum + (salePrice * item.qty);
+  }, 0);
   const total = subtotal;
 
   return (
@@ -233,18 +253,30 @@ export default function POS() {
               </div>
             ) : (
               cart.map((item) => (
-                <div key={item.product.id} className="flex gap-3 bg-white p-4 rounded-[1.5rem] border border-slate-100 shadow-sm items-center">
-                  <div className="flex-1 min-w-0">
+                <div key={item.product.id} className="flex gap-3 bg-white p-4 rounded-[1.5rem] border border-slate-100 shadow-sm items-center flex-wrap">
+                  <div className="flex-1 min-w-[150px]">
                     <h4 className="font-bold text-sm text-slate-800 truncate">{item.product.name}</h4>
-                    <div className="text-sm font-bold text-emerald-600 mt-1">{(item.product.price * item.qty).toFixed(2)}</div>
+                    <div className="text-sm font-bold text-emerald-600 mt-1">{((item.product.price * (1 - (item.discountPercent || 0) / 100)) * item.qty).toFixed(2)}</div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center bg-slate-50 rounded-xl border border-slate-200">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center bg-slate-50 rounded-xl border border-slate-200 h-[38px] px-2">
+                      <input 
+                        type="number" 
+                        min="0" 
+                        max="100" 
+                        value={item.discountPercent || 0} 
+                        onChange={(e) => updateDiscount(item.product.id, Number(e.target.value))}
+                        className="w-12 text-center text-sm font-bold text-slate-700 bg-transparent border-none focus:ring-0 p-0"
+                        placeholder="Disc"
+                      />
+                      <span className="text-xs font-bold text-slate-400">%</span>
+                    </div>
+                    <div className="flex items-center bg-slate-50 rounded-xl border border-slate-200 h-[38px]">
                       <button onClick={() => updateQty(item.product.id, -1)} className="p-2 text-slate-500 hover:text-emerald-600"><Minus className="w-4 h-4" /></button>
                       <span className="w-6 text-center text-sm font-bold text-slate-700">{item.qty}</span>
                       <button onClick={() => updateQty(item.product.id, 1)} className="p-2 text-slate-500 hover:text-emerald-600"><Plus className="w-4 h-4" /></button>
                     </div>
-                    <button onClick={() => removeFromCart(item.product.id)} className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors">
+                    <button onClick={() => removeFromCart(item.product.id)} className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors h-[38px]">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
