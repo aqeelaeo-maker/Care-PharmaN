@@ -185,98 +185,88 @@ export default function Settings() {
       )}
 
       {/* Access Control Section */}
-      <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-6 sm:p-8">
-        <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-6">
-          <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center">
-            <Shield className="w-6 h-6" />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-slate-800">Access Control</h2>
-            <p className="text-sm text-slate-500">Manage authorized users for this store.</p>
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          {!isSuperAdmin && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3">
-              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-              <div>
-                <h3 className="text-sm font-bold text-amber-800">Permission Restricted</h3>
-                <p className="text-sm text-amber-700 mt-1">Only the Super Admin (aqeelaeo@gmail.com) can modify authorized emails.</p>
-              </div>
+      {isSuperAdmin && (
+        <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-6 sm:p-8 mb-6">
+          <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-6">
+            <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center">
+              <Shield className="w-6 h-6" />
             </div>
-          )}
-
-          <div>
-            <h3 className="text-sm font-bold text-slate-800 mb-4 uppercase tracking-wider">Super Admin</h3>
-            <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
-              <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center">
-                <Shield className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-sm font-bold text-slate-800">aqeelaeo@gmail.com</p>
-                <p className="text-xs text-slate-500 font-medium">Full System Access</p>
-              </div>
-              <span className="ml-auto bg-emerald-500 text-white text-[10px] uppercase font-bold tracking-widest px-3 py-1 rounded-full">Owner</span>
+            <div>
+              <h2 className="text-xl font-bold text-slate-800">Access Control</h2>
+              <p className="text-sm text-slate-500">Manage authorized users for this store.</p>
             </div>
           </div>
 
-          <div>
-            <h3 className="text-sm font-bold text-slate-800 mb-4 uppercase tracking-wider">Authorized Emails</h3>
-            
-            <form onSubmit={handleAddEmail} className="flex gap-3 mb-6">
-              <div className="relative flex-1">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <input 
-                  type="email" 
-                  placeholder="Enter email to authorize..."
-                  value={newEmail}
-                  onChange={(e) => setNewEmail(e.target.value)}
-                  disabled={!isSuperAdmin}
-                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                />
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-sm font-bold text-slate-800 mb-4 uppercase tracking-wider">Super Admin</h3>
+              <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
+                <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center">
+                  <Shield className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-slate-800">aqeelaeo@gmail.com</p>
+                  <p className="text-xs text-slate-500 font-medium">Full System Access</p>
+                </div>
+                <span className="ml-auto bg-emerald-500 text-white text-[10px] uppercase font-bold tracking-widest px-3 py-1 rounded-full">Owner</span>
               </div>
-              <button 
-                type="submit"
-                disabled={!isSuperAdmin || !newEmail}
-                className="px-6 py-3 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors shadow-sm"
-              >
-                <Plus className="w-4 h-4" />
-                Authorize
-              </button>
-            </form>
+            </div>
 
-            <div className="border border-slate-100 rounded-2xl overflow-hidden bg-white">
-              {loading ? (
-                <div className="p-8 text-center text-slate-500 text-sm font-medium">Loading authorized emails...</div>
-              ) : authorizedEmails.length === 0 ? (
-                <div className="p-8 text-center text-slate-500 text-sm font-medium">No additional authorized emails found.</div>
-              ) : (
-                <ul className="divide-y divide-slate-50">
-                  {authorizedEmails.map((email) => (
-                    <li key={email} className="flex items-center justify-between p-4 hover:bg-slate-50/50 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center">
-                          <Mail className="w-4 h-4 text-slate-500" />
+            <div>
+              <h3 className="text-sm font-bold text-slate-800 mb-4 uppercase tracking-wider">Authorized Emails</h3>
+              
+              <form onSubmit={handleAddEmail} className="flex gap-3 mb-6">
+                <div className="relative flex-1">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                  <input 
+                    type="email" 
+                    placeholder="Enter email to authorize..."
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                  />
+                </div>
+                <button 
+                  type="submit"
+                  disabled={!newEmail}
+                  className="px-6 py-3 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors shadow-sm"
+                >
+                  <Plus className="w-4 h-4" />
+                  Authorize
+                </button>
+              </form>
+
+              <div className="border border-slate-100 rounded-2xl overflow-hidden bg-white">
+                {loading ? (
+                  <div className="p-8 text-center text-slate-500 text-sm font-medium">Loading authorized emails...</div>
+                ) : authorizedEmails.length === 0 ? (
+                  <div className="p-8 text-center text-slate-500 text-sm font-medium">No additional authorized emails found.</div>
+                ) : (
+                  <ul className="divide-y divide-slate-50">
+                    {authorizedEmails.map((email) => (
+                      <li key={email} className="flex items-center justify-between p-4 hover:bg-slate-50/50 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center">
+                            <Mail className="w-4 h-4 text-slate-500" />
+                          </div>
+                          <span className="text-sm font-bold text-slate-700">{email}</span>
                         </div>
-                        <span className="text-sm font-bold text-slate-700">{email}</span>
-                      </div>
-                      <button 
-                        onClick={() => handleRemoveEmail(email)}
-                        disabled={!isSuperAdmin}
-                        className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-slate-400"
-                        title="Remove authorization"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
+                        <button 
+                          onClick={() => handleRemoveEmail(email)}
+                          className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                          title="Remove authorization"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
       
       <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-6 sm:p-8">
         <h2 className="text-xl font-bold text-slate-800 mb-2">Store Configuration</h2>
