@@ -55,10 +55,13 @@ export default function Invoices() {
     }
   };
 
-  const filteredInvoices = invoices.filter(inv => 
-    inv.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    inv.paymentMethod?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredInvoices = invoices.filter(inv => {
+    const searchLower = searchTerm.toLowerCase();
+    const invoiceNumberStr = inv.invoiceNumber ? inv.invoiceNumber.toLowerCase() : `inv-${inv.id.slice(0, 8).toLowerCase()}`;
+    return invoiceNumberStr.includes(searchLower) ||
+      inv.paymentMethod?.toLowerCase().includes(searchLower) ||
+      inv.customerName?.toLowerCase().includes(searchLower);
+  });
 
   return (
     <div className="p-8 max-w-none h-full flex flex-col gap-6 bg-slate-50 relative">
@@ -111,7 +114,7 @@ export default function Invoices() {
                     <td className="py-4 px-6">
                       <div className="text-sm font-semibold text-slate-800 flex items-center gap-2">
                         <FileText className="w-4 h-4 text-slate-400" />
-                        INV-{inv.id.slice(0, 8).toUpperCase()}
+                        {inv.invoiceNumber || `INV-${inv.id.slice(0, 8).toUpperCase()}`}
                       </div>
                     </td>
                     <td className="py-4 px-6">

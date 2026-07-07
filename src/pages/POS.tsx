@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Trash2, Plus, Minus, User, ArrowLeft, Package, Printer } from 'lucide-react';
-import { collection, onSnapshot, addDoc, doc, updateDoc, increment } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, doc, updateDoc, increment, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useNavigate } from 'react-router-dom';
 import { printInvoiceHtml } from '../utils/print';
@@ -106,8 +106,31 @@ export default function POS() {
     if (cart.length === 0) return;
     setIsProcessing(true);
     try {
+      const year = new Date().getFullYear();
+      const q = query(
+        collection(db, 'sales'),
+        orderBy('timestamp', 'desc'),
+        limit(1)
+      );
+      
+      const querySnapshot = await getDocs(q);
+      let sequence = 1;
+      
+      if (!querySnapshot.empty) {
+        const lastSale = querySnapshot.docs[0].data();
+        if (lastSale.invoiceNumber) {
+          const parts = lastSale.invoiceNumber.split('-');
+          if (parts.length === 3 && parts[1] === year.toString()) {
+            sequence = parseInt(parts[2], 10) + 1;
+          }
+        }
+      }
+      
+      const invoiceNumber = `INV-${year}-${sequence.toString().padStart(4, '0')}`;
+
       // 1. Create sale record
       await addDoc(collection(db, 'sales'), {
+        invoiceNumber,
         items: cart.map(item => {
           const originalPrice = item.product.price;
           const salePrice = originalPrice * (1 - (item.discountPercent || 0) / 100);

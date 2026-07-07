@@ -135,7 +135,7 @@ export default function Reports() {
               {salesData.slice(0, 50).map((sale) => (
                 <tr key={sale.id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="py-4 px-6">
-                    <div className="text-sm font-semibold text-slate-800 font-mono">TXN-{sale.id.slice(0, 8).toUpperCase()}</div>
+                    <div className="text-sm font-semibold text-slate-800 font-mono">{sale.invoiceNumber || `TXN-${sale.id.slice(0, 8).toUpperCase()}`}</div>
                   </td>
                   <td className="py-4 px-6 text-sm text-slate-500">
                     {sale.timestamp ? sale.timestamp.toDate().toLocaleString() : '-'}

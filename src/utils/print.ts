@@ -61,7 +61,7 @@ export const printInvoiceHtml = async (invoice: any, type: 'standard' | 'thermal
     htmlContent = `
       <html>
         <head>
-          <title>Invoice ${invoice.id ? `INV-${invoice.id.slice(0,8).toUpperCase()}` : 'Preview'}</title>
+          <title>Invoice ${invoice.invoiceNumber || (invoice.id ? `INV-${invoice.id.slice(0,8).toUpperCase()}` : 'Preview')}</title>
           <style>
             body { font-family: 'Courier New', Courier, monospace; padding: 10px; color: #000; width: 80mm; margin: 0 auto; font-size: 12px; }
             .header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px; }
@@ -82,7 +82,7 @@ export const printInvoiceHtml = async (invoice: any, type: 'standard' | 'thermal
           ${companyHeaderHtml}
           <div class="header">
             <h1 style="margin: 0 0 5px 0; font-size: 1.2em;">RECEIPT</h1>
-            ${invoice.id ? `<div>INV-${invoice.id.slice(0,8).toUpperCase()}</div>` : ''}
+            ${invoice.invoiceNumber ? `<div>${invoice.invoiceNumber}</div>` : (invoice.id ? `<div>INV-${invoice.id.slice(0,8).toUpperCase()}</div>` : '')}
             <div>${dateStr}</div>
           </div>
           <div class="details">
@@ -114,7 +114,7 @@ export const printInvoiceHtml = async (invoice: any, type: 'standard' | 'thermal
     htmlContent = `
       <html>
         <head>
-          <title>Invoice ${invoice.id ? `INV-${invoice.id.slice(0,8).toUpperCase()}` : 'Preview'}</title>
+          <title>Invoice ${invoice.invoiceNumber || (invoice.id ? `INV-${invoice.id.slice(0,8).toUpperCase()}` : 'Preview')}</title>
           <style>
             body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #333; max-width: 800px; margin: 0 auto; }
             .invoice-meta { border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 30px; text-align: left; }
@@ -132,7 +132,7 @@ export const printInvoiceHtml = async (invoice: any, type: 'standard' | 'thermal
         <body>
           ${companyHeaderHtml}
           <div class="invoice-meta">
-            ${invoice.id ? `<div><strong>Invoice #:</strong> INV-${invoice.id.slice(0,8).toUpperCase()}</div>` : ''}
+            ${invoice.invoiceNumber ? `<div><strong>Invoice #:</strong> ${invoice.invoiceNumber}</div>` : (invoice.id ? `<div><strong>Invoice #:</strong> INV-${invoice.id.slice(0,8).toUpperCase()}</div>` : '')}
             <div><strong>Date:</strong> ${dateStr}</div>
           </div>
           <div class="details">
