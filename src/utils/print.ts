@@ -1,13 +1,13 @@
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
-export const printInvoiceHtml = async (invoice: any, type: 'standard' | 'thermal' = 'standard') => {
+export const printInvoiceHtml = async (invoice: any, userEmail: string, type: 'standard' | 'thermal' = 'standard') => {
   const printWindow = window.open('', '_blank');
   if (!printWindow) return;
 
   let storeConfig: any = {};
   try {
-    const configDoc = await getDoc(doc(db, 'settings', 'store_config'));
+    const configDoc = await getDoc(doc(db, 'stores', userEmail, 'settings', 'store_config'));
     if (configDoc.exists()) {
       storeConfig = configDoc.data();
     }

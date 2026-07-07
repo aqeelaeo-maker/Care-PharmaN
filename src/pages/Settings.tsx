@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { db, storage } from '../lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { getStoreDoc } from '../utils/store';
 
 export default function Settings() {
   const { user, role } = useAuth();
@@ -29,12 +30,14 @@ export default function Settings() {
 
   useEffect(() => {
     fetchAuthorizedEmails();
-    fetchStoreConfig();
-  }, []);
+    if (user?.email) {
+      fetchStoreConfig(user.email);
+    }
+  }, [user]);
 
-  const fetchStoreConfig = async () => {
+  const fetchStoreConfig = async (email: string) => {
     try {
-      const docRef = doc(db, 'settings', 'store_config');
+      const docRef = getStoreDoc(email, 'settings', 'store_config');
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         setStoreConfig(docSnap.data() as any);
@@ -78,10 +81,11 @@ export default function Settings() {
 
   const handleSaveStoreConfig = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user?.email) return;
     try {
       setSavingConfig(true);
       setError('');
-      await setDoc(doc(db, 'settings', 'store_config'), storeConfig, { merge: true });
+      await setDoc(getStoreDoc(user.email, 'settings', 'store_config'), storeConfig, { merge: true });
       setSuccess('Store configuration saved successfully.');
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {

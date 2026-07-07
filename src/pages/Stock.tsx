@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Edit, Trash, X, Calendar, AlertCircle, Plus } from 'lucide-react';
-import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { getStoreCollection, getStoreDoc } from '../utils/store';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Stock() {
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [products, setProducts] = useState<any[]>([]);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
@@ -17,7 +19,8 @@ export default function Stock() {
   });
 
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, 'products'), (snapshot) => {
+    if (!user?.email) return;
+    const unsub = onSnapshot(getStoreCollection(user.email, 'products'), (snapshot) => {
       const items: any[] = [];
       snapshot.forEach((doc) => {
         items.push({ id: doc.id, ...doc.data() });
@@ -25,18 +28,18 @@ export default function Stock() {
       setProducts(items);
     });
     return () => unsub();
-  }, []);
+  }, [user]);
 
   const handleUpdateStock = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedProductId) return;
+    if (!selectedProductId || !user?.email) return;
     
     try {
       const stockNum = Number(updateData.stock);
       const priceNum = Number(updateData.price);
       const status = stockNum < 10 ? 'Critical' : stockNum < 30 ? 'Low Stock' : 'In Stock';
       
-      await updateDoc(doc(db, 'products', selectedProductId), {
+      await updateDoc(getStoreDoc(user.email, 'products', selectedProductId), {
         batch: updateData.batch,
         stock: stockNum,
         price: priceNum,

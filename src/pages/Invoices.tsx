@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, FileText, Eye, Edit, Trash2, X, Printer } from 'lucide-react';
-import { collection, onSnapshot, query, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { onSnapshot, query, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { getStoreCollection, getStoreDoc } from '../utils/store';
 import { useNavigate } from 'react-router-dom';
 import { printInvoiceHtml } from '../utils/print';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Invoices() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [invoices, setInvoices] = useState<any[]>([]);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -14,7 +16,8 @@ export default function Invoices() {
   const [editData, setEditData] = useState({ paymentMethod: 'Cash' });
 
   useEffect(() => {
-    const q = query(collection(db, 'sales'), orderBy('timestamp', 'desc'));
+    if (!user?.email) return;
+    const q = query(getStoreCollection(user.email, 'sales'), orderBy('timestamp', 'desc'));
     const unsub = onSnapshot(q, (snapshot) => {
       const items: any[] = [];
       snapshot.forEach((doc) => {
@@ -23,12 +26,13 @@ export default function Invoices() {
       setInvoices(items);
     });
     return () => unsub();
-  }, []);
+  }, [user]);
 
   const handleDelete = async (id: string) => {
+    if (!user?.email) return;
     if (confirm('Are you sure you want to delete this invoice? This action cannot be undone.')) {
       try {
-        await deleteDoc(doc(db, 'sales', id));
+        await deleteDoc(getStoreDoc(user.email, 'sales', id));
       } catch (err) {
         console.error('Error deleting invoice', err);
       }
@@ -43,9 +47,9 @@ export default function Invoices() {
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedInvoice) return;
+    if (!selectedInvoice || !user?.email) return;
     try {
-      await updateDoc(doc(db, 'sales', selectedInvoice.id), {
+      await updateDoc(getStoreDoc(user.email, 'sales', selectedInvoice.id), {
         paymentMethod: editData.paymentMethod
       });
       setIsEditModalOpen(false);
@@ -139,14 +143,14 @@ export default function Invoices() {
                     <td className="py-4 px-6 text-right">
                       <div className="flex justify-end gap-2">
                         <button 
-                          onClick={() => printInvoiceHtml(inv, 'standard')}
+                          onClick={() => user?.email && printInvoiceHtml(inv, user.email, 'standard')}
                           className="flex items-center gap-1 p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors text-xs font-bold"
                           title="Print A4"
                         >
                           <Printer className="w-4 h-4" /> A4
                         </button>
                         <button 
-                          onClick={() => printInvoiceHtml(inv, 'thermal')}
+                          onClick={() => user?.email && printInvoiceHtml(inv, user.email, 'thermal')}
                           className="flex items-center gap-1 p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-colors text-xs font-bold"
                           title="Print 80mm"
                         >

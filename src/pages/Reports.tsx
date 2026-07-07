@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Download, FileText, TrendingUp, Filter, Calendar } from 'lucide-react';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { onSnapshot, query, orderBy } from 'firebase/firestore';
+import { getStoreCollection } from '../utils/store';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, LineChart, Line } from 'recharts';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Reports() {
+  const { user } = useAuth();
   const [salesData, setSalesData] = useState<any[]>([]);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [totalTransactions, setTotalTransactions] = useState(0);
   const [chartData, setChartData] = useState<any[]>([]);
 
   useEffect(() => {
-    const q = query(collection(db, 'sales'), orderBy('timestamp', 'desc'));
+    if (!user?.email) return;
+    const q = query(getStoreCollection(user.email, 'sales'), orderBy('timestamp', 'desc'));
     const unsub = onSnapshot(q, (snapshot) => {
       const items: any[] = [];
       let revenue = 0;

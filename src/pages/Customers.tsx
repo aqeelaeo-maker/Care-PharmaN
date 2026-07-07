@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, Filter, Download, MoreVertical, Edit, Trash, X, Phone, Mail, MapPin } from 'lucide-react';
-import { collection, onSnapshot, addDoc, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { onSnapshot, addDoc, deleteDoc, doc } from 'firebase/firestore';
+import { getStoreCollection, getStoreDoc } from '../utils/store';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Customers() {
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [customers, setCustomers] = useState<any[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -17,7 +19,8 @@ export default function Customers() {
   });
 
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, 'customers'), (snapshot) => {
+    if (!user?.email) return;
+    const unsub = onSnapshot(getStoreCollection(user.email, 'customers'), (snapshot) => {
       const items: any[] = [];
       snapshot.forEach((doc) => {
         items.push({ id: doc.id, ...doc.data() });
@@ -25,12 +28,13 @@ export default function Customers() {
       setCustomers(items);
     });
     return () => unsub();
-  }, []);
+  }, [user]);
 
   const handleAddCustomer = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user?.email) return;
     try {
-      await addDoc(collection(db, 'customers'), {
+      await addDoc(getStoreCollection(user.email, 'customers'), {
         ...newCustomer,
         createdAt: new Date()
       });
@@ -42,9 +46,10 @@ export default function Customers() {
   };
 
   const handleDeleteCustomer = async (id: string) => {
+    if (!user?.email) return;
     if (confirm("Are you sure you want to delete this customer?")) {
       try {
-        await deleteDoc(doc(db, 'customers', id));
+        await deleteDoc(getStoreDoc(user.email, 'customers', id));
       } catch (err) {
         console.error("Error deleting customer", err);
       }

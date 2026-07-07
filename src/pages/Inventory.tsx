@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, Filter, Download, MoreVertical, Edit, Trash, X } from 'lucide-react';
-import { collection, onSnapshot, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { onSnapshot, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { getStoreCollection, getStoreDoc } from '../utils/store';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Inventory() {
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [products, setProducts] = useState<any[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -28,7 +30,8 @@ export default function Inventory() {
   };
 
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, 'products'), (snapshot) => {
+    if (!user?.email) return;
+    const unsub = onSnapshot(getStoreCollection(user.email, 'products'), (snapshot) => {
       const items: any[] = [];
       snapshot.forEach((doc) => {
         items.push({ id: doc.id, ...doc.data() });
@@ -36,12 +39,13 @@ export default function Inventory() {
       setProducts(items);
     });
     return () => unsub();
-  }, []);
+  }, [user]);
 
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user?.email) return;
     try {
-      await addDoc(collection(db, 'products'), {
+      await addDoc(getStoreCollection(user.email, 'products'), {
         ...newProduct,
         stock: 0,
         price: 0,
@@ -57,9 +61,10 @@ export default function Inventory() {
   };
 
   const handleDeleteProduct = async (id: string) => {
+    if (!user?.email) return;
     if (confirm("Are you sure you want to delete this product?")) {
       try {
-        await deleteDoc(doc(db, 'products', id));
+        await deleteDoc(getStoreDoc(user.email, 'products', id));
       } catch (err) {
         console.error("Error deleting product", err);
       }

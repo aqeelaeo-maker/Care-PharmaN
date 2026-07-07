@@ -34,13 +34,14 @@ export default function Layout() {
   const [storeLogo, setStoreLogo] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    const unsub = onSnapshot(doc(db, 'settings', 'store_config'), (doc) => {
+    if (!user?.email) return;
+    const unsub = onSnapshot(doc(db, 'stores', user.email, 'settings', 'store_config'), (doc) => {
       if (doc.exists()) {
         setStoreLogo(doc.data().logoUrl || null);
       }
     });
     return () => unsub();
-  }, []);
+  }, [user]);
 
   return (
     <div className="flex h-screen bg-slate-50 text-slate-900 font-sans overflow-hidden">

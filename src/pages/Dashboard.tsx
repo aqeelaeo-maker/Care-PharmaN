@@ -19,11 +19,13 @@ import {
   BarChart,
   Bar
 } from 'recharts';
-import { collection, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { onSnapshot, query, orderBy, limit } from 'firebase/firestore';
+import { getStoreCollection } from '../utils/store';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [dailyRevenue, setDailyRevenue] = useState(0);
   const [totalCustomers, setTotalCustomers] = useState(0);
   const [productsInStock, setProductsInStock] = useState(0);
@@ -33,8 +35,10 @@ export default function Dashboard() {
   const [salesData, setSalesData] = useState<{name: string, sales: number}[]>([]);
 
   useEffect(() => {
+    if (!user?.email) return;
+
     // Listen to Products
-    const unsubProducts = onSnapshot(collection(db, 'products'), (snapshot) => {
+    const unsubProducts = onSnapshot(getStoreCollection(user.email, 'products'), (snapshot) => {
       let totalStock = 0;
       let lowCount = 0;
       let categories: Record<string, number> = {};
@@ -66,12 +70,12 @@ export default function Dashboard() {
     });
 
     // Listen to Customers
-    const unsubCustomers = onSnapshot(collection(db, 'customers'), (snapshot) => {
+    const unsubCustomers = onSnapshot(getStoreCollection(user.email, 'customers'), (snapshot) => {
       setTotalCustomers(snapshot.docs.length);
     });
 
     // Listen to Sales
-    const unsubSales = onSnapshot(collection(db, 'sales'), (snapshot) => {
+    const unsubSales = onSnapshot(getStoreCollection(user.email, 'sales'), (snapshot) => {
       let todayRev = 0;
       
       // We will group by day (Mon, Tue, etc.) for the last 7 days

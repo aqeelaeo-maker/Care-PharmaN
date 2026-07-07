@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, Filter, Download, MoreVertical, Edit, Trash, X, Phone, Mail, Building, MapPin } from 'lucide-react';
-import { collection, onSnapshot, addDoc, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { onSnapshot, addDoc, deleteDoc, doc } from 'firebase/firestore';
+import { getStoreCollection, getStoreDoc } from '../utils/store';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Vendors() {
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [vendors, setVendors] = useState<any[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -18,7 +20,8 @@ export default function Vendors() {
   });
 
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, 'vendors'), (snapshot) => {
+    if (!user?.email) return;
+    const unsub = onSnapshot(getStoreCollection(user.email, 'vendors'), (snapshot) => {
       const items: any[] = [];
       snapshot.forEach((doc) => {
         items.push({ id: doc.id, ...doc.data() });
@@ -26,12 +29,13 @@ export default function Vendors() {
       setVendors(items);
     });
     return () => unsub();
-  }, []);
+  }, [user]);
 
   const handleAddVendor = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user?.email) return;
     try {
-      await addDoc(collection(db, 'vendors'), {
+      await addDoc(getStoreCollection(user.email, 'vendors'), {
         ...newVendor,
         createdAt: new Date()
       });
@@ -43,9 +47,10 @@ export default function Vendors() {
   };
 
   const handleDeleteVendor = async (id: string) => {
+    if (!user?.email) return;
     if (confirm("Are you sure you want to delete this vendor?")) {
       try {
-        await deleteDoc(doc(db, 'vendors', id));
+        await deleteDoc(getStoreDoc(user.email, 'vendors', id));
       } catch (err) {
         console.error("Error deleting vendor", err);
       }

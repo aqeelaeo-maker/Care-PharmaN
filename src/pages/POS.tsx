@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Trash2, Plus, Minus, User, ArrowLeft, Package, Printer } from 'lucide-react';
-import { collection, onSnapshot, addDoc, doc, updateDoc, increment, query, orderBy, limit, getDocs } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { onSnapshot, addDoc, updateDoc, increment, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { getStoreCollection, getStoreDoc } from '../utils/store';
 import { useNavigate } from 'react-router-dom';
 import { printInvoiceHtml } from '../utils/print';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function POS() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [cart, setCart] = useState<{product: any, qty: number, discountPercent: number}[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
@@ -16,13 +18,14 @@ export default function POS() {
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
-    const unsubProducts = onSnapshot(collection(db, 'products'), (snapshot) => {
+    if (!user?.email) return;
+    const unsubProducts = onSnapshot(getStoreCollection(user.email, 'products'), (snapshot) => {
       const items: any[] = [];
       snapshot.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
       setProducts(items);
     });
     
-    const unsubCustomers = onSnapshot(collection(db, 'customers'), (snapshot) => {
+    const unsubCustomers = onSnapshot(getStoreCollection(user.email, 'customers'), (snapshot) => {
       const items: any[] = [];
       snapshot.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
       setCustomers(items);
@@ -32,7 +35,7 @@ export default function POS() {
       unsubProducts();
       unsubCustomers();
     };
-  }, []);
+  }, [user]);
 
   const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
 
@@ -80,7 +83,7 @@ export default function POS() {
   };
 
   const handlePrintCurrentInvoice = (type: 'standard' | 'thermal') => {
-    if (cart.length === 0) return;
+    if (cart.length === 0 || !user?.email) return;
     const tempInvoice = {
       items: cart.map(item => {
         const originalPrice = item.product.price;
@@ -99,16 +102,16 @@ export default function POS() {
       total,
       timestamp: new Date()
     };
-    printInvoiceHtml(tempInvoice, type);
+    printInvoiceHtml(tempInvoice, user.email, type);
   };
 
   const processPayment = async (method: string) => {
-    if (cart.length === 0) return;
+    if (cart.length === 0 || !user?.email) return;
     setIsProcessing(true);
     try {
       const year = new Date().getFullYear();
       const q = query(
-        collection(db, 'sales'),
+        getStoreCollection(user.email, 'sales'),
         orderBy('timestamp', 'desc'),
         limit(1)
       );
@@ -129,7 +132,7 @@ export default function POS() {
       const invoiceNumber = `INV-${year}-${sequence.toString().padStart(4, '0')}`;
 
       // 1. Create sale record
-      await addDoc(collection(db, 'sales'), {
+      await addDoc(getStoreCollection(user.email, 'sales'), {
         invoiceNumber,
         items: cart.map(item => {
           const originalPrice = item.product.price;
@@ -154,7 +157,7 @@ export default function POS() {
 
       // 2. Update stock
       for (const item of cart) {
-        const productRef = doc(db, 'products', item.product.id);
+        const productRef = getStoreDoc(user.email, 'products', item.product.id);
         await updateDoc(productRef, {
           stock: increment(-item.qty)
         });
